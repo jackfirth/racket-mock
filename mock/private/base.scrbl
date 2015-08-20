@@ -9,7 +9,7 @@
 @defproc[(make-mock [proc procedure?]) mock?]{
   Returns a mocked version of @racket[proc]. The
   mock may be used in place of @racket[proc] anywhere
-  and behaves just like a regular procedure. When used
+  and behaves just like @racket[proc]. When used
   as a procedure, the returned @racket[mock?] forwards
   the arguments it's given to @racket[proc] and records
   the argument list and the result @racket[proc] returned
