@@ -11,7 +11,10 @@
   [mock? predicate/c]
   [make-mock (-> procedure? mock?)]
   [mock-calls (-> mock? (listof mock-call?))]
-  [struct mock-call ([args list?] [result any/c])]))
+  [struct mock-call ([args list?] [result any/c])]
+  [mock-called-with? (-> list? mock? boolean?)]
+  [mock-num-calls (-> mock? exact-nonnegative-integer?)]))
+
 
 (struct mock (proc calls-box)
   #:property prop:procedure (struct-field-index proc))
@@ -29,4 +32,10 @@
   (mock wrapper calls))
 
 (define (mock-calls mock)
-  (unbox (mock-calls mock)))
+  (unbox (mock-calls-box mock)))
+
+(define (mock-called-with? args mock)
+  (not (false? (member args (map mock-call-args (mock-calls mock))))))
+
+(define (mock-num-calls mock)
+  (length (mock-calls mock)))
