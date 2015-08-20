@@ -19,4 +19,5 @@ source code: @url["https://github.com/jackfirth/racket-mock"]
 
 @include-section["private/base.scrbl"]
 @include-section["private/check.scrbl"]
+@include-section["private/predefined.scrbl"]
 @include-section["private/syntax.scrbl"]

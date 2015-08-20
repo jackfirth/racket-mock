@@ -7,13 +7,13 @@
 
 (provide
  (contract-out
-  [check-mock-called-with? (-> mock? list? void?)]
-  [check-mock-num-calls (-> mock? exact-nonnegative-integer? void?)]))
+  [check-mock-called-with? (-> list? mock? void?)]
+  [check-mock-num-calls (-> exact-nonnegative-integer? mock? void?)]))
 
 
-(define-simple-check (check-mock-called-with? mock args)
+(define-simple-check (check-mock-called-with? args mock)
   (mock-called-with? args mock))
 
-(define-simple-check (check-mock-num-calls mock expected-num-calls)
+(define-simple-check (check-mock-num-calls expected-num-calls mock)
   (equal? (mock-num-calls mock) expected-num-calls))
 

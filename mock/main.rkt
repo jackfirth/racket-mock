@@ -4,6 +4,7 @@
 (require
   "private/base.rkt"
   "private/check.rkt"
+  "private/predefined.rkt"
   "private/syntax.rkt")
 
 
@@ -11,4 +12,5 @@
  (all-from-out
   "private/base.rkt"
   "private/check.rkt"
+  "private/predefined.rkt"
   "private/syntax.rkt"))
