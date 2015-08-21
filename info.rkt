@@ -17,5 +17,6 @@
 (define build-deps
   '("cover"
     "rackunit-lib"
+    "rackunit-doc"
     "racket-doc"
     "doc-coverage"))
