@@ -20,3 +20,11 @@
     "rackunit-doc"
     "racket-doc"
     "doc-coverage"))
+
+
+(define test-omit-paths
+  '("mock/main.scrbl"
+    "mock/private/base.scrbl"
+    "mock/private/check.scrbl"
+    "mock/private/predefined.scrbl"
+    "mock/private/syntax.scrbl"))
