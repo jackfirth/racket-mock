@@ -10,7 +10,7 @@ Example:
 ```racket
 (require mock)
 (define/mock (displayln-twice v)
-  ([displayln (void-mock)]) ; in the test submodule, this function calls a mock instead of displayln
+  ([displayln (void-mock)]) ; in the test submodule, calls a mock instead of displayln
   (displayln v)
   (displayln v))
 (displayln-twice "sent to real displayln")
