@@ -9,15 +9,15 @@ Example:
 
 ```racket
 (require mock)
-    (define/mock (displayln-twice v)
-      ([displayln (void-mock)]) ; in the test submodule, this function calls a mock instead of displayln
-      (displayln v)
-      (displayln v))
-    (displayln-twice "sent to real displayln")
-    (mock? displayln) ; #f
-    (mock-num-calls displayln) ; error - displayln isn't a mock
-    (module+ test
-      (displayln-twice "sent to mock displayln")
-      (mock? displayln) ; #t
-      (mock-num-calls displayln)) ; 2
+(define/mock (displayln-twice v)
+  ([displayln (void-mock)]) ; in the test submodule, this function calls a mock instead of displayln
+  (displayln v)
+  (displayln v))
+(displayln-twice "sent to real displayln")
+(mock? displayln) ; #f
+(mock-num-calls displayln) ; error - displayln isn't a mock
+(module+ test
+  (displayln-twice "sent to mock displayln")
+  (mock? displayln) ; #t
+  (mock-num-calls displayln)) ; 2
 ```
