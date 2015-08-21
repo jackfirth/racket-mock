@@ -15,6 +15,7 @@ Example:
       (displayln v))
     (displayln-twice "sent to real displayln")
     (mock? displayln) ; #f
+    (mock-num-calls displayln) ; error - displayln isn't a mock
     (module+ test
       (displayln-twice "sent to mock displayln")
       (mock? displayln) ; #t
