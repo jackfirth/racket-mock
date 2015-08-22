@@ -1,19 +1,19 @@
-#lang racket/base
+#lang sweet-exp racket/base
 
-(require
+require
   scribble/eval
-  (for-label mock
-             racket/base
-             racket/contract
-             rackunit))
+  for-label mock
+            racket/base
+            racket/contract
+            rackunit
 
-(provide
- mock-examples
- (for-label
-  (all-from-out mock
-                racket/base
-                racket/contract
-                rackunit)))
+provide
+  mock-examples
+  for-label
+    all-from-out mock
+                 racket/base
+                 racket/contract
+                 rackunit
 
 
 (define-syntax-rule (define-examples-form id require-spec ...)

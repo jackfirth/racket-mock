@@ -1,14 +1,14 @@
-#lang racket/base
+#lang sweet-exp racket/base
 
-(require racket/bool
-         racket/contract
-         rackunit
-         "base.rkt")
+require racket/bool
+        racket/contract
+        rackunit
+        "base.rkt"
 
-(provide
- (contract-out
-  [check-mock-called-with? (-> list? mock? void?)]
-  [check-mock-num-calls (-> exact-nonnegative-integer? mock? void?)]))
+provide
+  contract-out
+    check-mock-called-with? (-> list? mock? void?)
+    check-mock-num-calls (-> exact-nonnegative-integer? mock? void?)
 
 
 (define-simple-check (check-mock-called-with? args mock)

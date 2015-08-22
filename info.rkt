@@ -11,7 +11,8 @@
   '("base"
     "fancy-app"
     "rackunit-lib"
-    "scribble-lib"))
+    "scribble-lib"
+    "sweet-exp"))
 
 
 (define build-deps
