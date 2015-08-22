@@ -1,16 +1,16 @@
-#lang racket/base
+#lang sweet-exp racket/base
 
 
-(require
+require
   "private/base.rkt"
   "private/check.rkt"
   "private/predefined.rkt"
-  "private/syntax.rkt")
+  "private/syntax.rkt"
 
 
-(provide
- (all-from-out
-  "private/base.rkt"
-  "private/check.rkt"
-  "private/predefined.rkt"
-  "private/syntax.rkt"))
+provide
+  all-from-out
+    "private/base.rkt"
+    "private/check.rkt"
+    "private/predefined.rkt"
+    "private/syntax.rkt"

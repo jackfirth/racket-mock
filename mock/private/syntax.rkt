@@ -1,11 +1,16 @@
-#lang racket/base
+#lang sweet-exp racket/base
 
-(require racket/splicing
-         (for-syntax racket/base
-                     syntax/parse))
+require racket/splicing
+         for-syntax racket/base
+                    syntax/parse
 
-(provide define/mock
-         define/mock-as)
+module+ test
+  require rackunit
+          "base.rkt"
+          "predefined.rkt"
+
+provide define/mock
+        define/mock-as
 
 
 (define-syntax-rule (define-id/mock-value-as id ([mock-id mock-value-id mock-value] ...) expr)

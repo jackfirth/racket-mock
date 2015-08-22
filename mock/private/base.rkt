@@ -1,19 +1,19 @@
-#lang racket/base
+#lang sweet-exp racket/base
 
-(require racket/bool
-         racket/contract
-         racket/splicing
-         rackunit
-         unstable/sequence)
+require racket/bool
+        racket/contract
+        racket/splicing
+        rackunit
+        unstable/sequence
 
-(provide
- (contract-out
-  [mock? predicate/c]
-  [make-mock (-> procedure? mock?)]
-  [mock-calls (-> mock? (listof mock-call?))]
-  [struct mock-call ([args list?] [results list?])]
-  [mock-called-with? (-> list? mock? boolean?)]
-  [mock-num-calls (-> mock? exact-nonnegative-integer?)]))
+provide
+  contract-out
+    mock? predicate/c
+    make-mock (-> procedure? mock?)
+    mock-calls (-> mock? (listof mock-call?))
+    struct mock-call ([args list?] [results list?])
+    mock-called-with? (-> list? mock? boolean?)
+    mock-num-calls (-> mock? exact-nonnegative-integer?)
 
 
 (struct mock (proc calls-box)
@@ -21,26 +21,27 @@
 
 (struct mock-call (args results) #:prefab)
 
+(define (ensure-same-keyword-arity proc-to-wrap wrapper-proc)
+  (define arity (procedure-arity proc-to-wrap))
+  (define-values (req-kws all-kws) (procedure-keywords proc-to-wrap))
+  (procedure-reduce-keyword-arity wrapper-proc arity req-kws all-kws))
+
 (define (make-mock proc)
   (define calls (box '()))
   (define (add-call! call)
     (set-box! calls (cons call (unbox calls))))
-  (define arity (procedure-arity proc))
-  (define-values (req-kws all-kws) (procedure-keywords proc))
   (define wrapper
-    (procedure-reduce-keyword-arity ;so (procedure-keywords mock) works
-     (make-keyword-procedure
-      (λ (kws kw-vs . vs)
-        (define results
-          (call-with-values (λ _ (keyword-apply proc kws kw-vs vs))
-                            list))
-        (define all-vs (append vs (map list kws kw-vs)))
-        (add-call! (mock-call all-vs  results))
-        (apply values results)))
-     arity
-     req-kws
-     all-kws))
-  (mock wrapper calls))
+    (make-keyword-procedure
+     (λ (kws kw-vs . vs)
+       (define results
+         (call-with-values (λ _ (keyword-apply proc kws kw-vs vs))
+                           list))
+       (define all-vs (append vs (map list kws kw-vs)))
+       (add-call! (mock-call all-vs  results))
+       (apply values results))))
+  (define wrapper-with-proper-keyword-args
+    (ensure-same-keyword-arity proc wrapper))
+  (mock wrapper-with-proper-keyword-args calls))
 
 (define (mock-calls mock)
   (unbox (mock-calls-box mock)))
