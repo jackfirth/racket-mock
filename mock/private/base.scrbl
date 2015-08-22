@@ -53,11 +53,20 @@
   Returns @racket[#t] if @racket[mock] has ever been
   called with arguments that are @racket[equal?] to
   @racket[args], returns @racket[#f] otherwise.
+
+  In the list of arguments, supply by-position argument values
+  first, in order. Then supply keyword arguments, in any order.
+  Supply each keyword as a two-element list: @racket[(#:keyword value)].
   @mock-examples[
     (define displayln-mock (make-mock displayln))
     (mock-called-with? '("foo") displayln-mock)
     (displayln-mock "foo")
     (mock-called-with? '("foo") displayln-mock)
+    (require racket/format)
+    (define ~a-mock (make-mock ~a))
+    (~a-mock 0 #:width 3 #:align 'left)
+    (mock-called-with? '(0 [#:align left] [#:width 3]) ~a-mock)
+    (mock-called-with? '(0 [#:width 3] [#:align left]) ~a-mock)
 ]}
 
 @defproc[(mock-num-calls [mock mock?])

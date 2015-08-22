@@ -25,18 +25,50 @@
   (define calls (box '()))
   (define (add-call! call)
     (set-box! calls (cons call (unbox calls))))
-  (define (wrapper . vs)
-    (define results (call-with-values (λ _ (apply proc vs))
-                                      list))
-    (add-call! (mock-call vs results))
-    (apply values results))
+  (define arity (procedure-arity proc))
+  (define-values (req-kws all-kws) (procedure-keywords proc))
+  (define wrapper
+    (procedure-reduce-keyword-arity ;so (procedure-keywords mock) works
+     (make-keyword-procedure
+      (λ (kws kw-vs . vs)
+        (define results
+          (call-with-values (λ _ (keyword-apply proc kws kw-vs vs))
+                            list))
+        (define all-vs (append vs (map list kws kw-vs)))
+        (add-call! (mock-call all-vs  results))
+        (apply values results)))
+     arity
+     req-kws
+     all-kws))
   (mock wrapper calls))
 
 (define (mock-calls mock)
   (unbox (mock-calls-box mock)))
 
 (define (mock-called-with? args mock)
-  (not (false? (member args (map mock-call-args (mock-calls mock))))))
+  ;; For user convenience, don't require the keywords to be sorted.
+  (define member? (compose not not member))
+  (for/or ([call (in-list (mock-calls mock))])
+    (for/and ([arg (in-list args)])
+      (member? arg (mock-call-args call)))))
 
 (define (mock-num-calls mock)
   (length (mock-calls mock)))
+
+(module* test racket/base
+  (require rackunit
+           racket/format
+           (submod ".."))
+  (define m (make-mock ~a))
+  (check-equal? (call-with-values (λ _ (procedure-keywords ~a)) list)
+                (call-with-values (λ _ (procedure-keywords m)) list))
+  (check-equal? (m 0) "0")
+  (check-equal? (m 0 #:width 3 #:align 'left) "0  ")
+  (check-equal? (mock-calls m)
+                '(#s(mock-call (0 [#:align left] [#:width 3]) ("0  "))
+                  #s(mock-call (0) ("0"))))
+  (check-equal? (mock-num-calls m) 2)
+  (check-true (mock-called-with? '(0) m))
+  (check-true (mock-called-with? '(0 [#:align left] [#:width 3]) m))
+  (check-true (mock-called-with? '(0 [#:width 3] [#:align left]) m))
+  (check-false (mock-called-with? '(42) m)))
