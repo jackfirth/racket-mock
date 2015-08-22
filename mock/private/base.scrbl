@@ -24,12 +24,14 @@
     (define displayln-mock (make-mock displayln))
     (displayln-mock "foo")
     (mock? displayln-mock)
+    (define quotient/remainder-mock (make-mock quotient/remainder))
+    (quotient/remainder-mock 10 3)
 ]}
 
-@defstruct*[mock-call ([args list?] [result any/c])
+@defstruct*[mock-call ([args list?] [results list?])
             #:prefab]{
   A prefab structure containg the arguments and result
-  of a single call to a @racket[mock?].
+  values of a single call to a @racket[mock?].
 }
 
 @defproc[(mock-calls [mock mock?]) (listof mock-call?)]{
@@ -40,6 +42,10 @@
     (mock-calls displayln-mock)
     (displayln-mock "foo")
     (mock-calls displayln-mock)
+    (define quotient/remainder-mock (make-mock quotient/remainder))
+    (quotient/remainder-mock 10 3)
+    (quotient/remainder-mock 3 2)
+    (mock-calls quotient/remainder-mock)
 ]}
 
 @defproc[(mock-called-with? [args list?] [mock mock?])
