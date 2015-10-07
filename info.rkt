@@ -12,7 +12,8 @@
     "fancy-app"
     "rackunit-lib"
     "scribble-lib"
-    "sweet-exp"))
+    "sweet-exp"
+    "unstable-lib"))
 
 
 (define build-deps
