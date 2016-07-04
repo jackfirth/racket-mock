@@ -9,7 +9,7 @@ require racket/bool
 provide
   contract-out
     mock? predicate/c
-    make-mock (-> procedure? mock?)
+    make-mock (->* (procedure?) (procedure?) mock?)
     mock-calls (-> mock? (listof mock-call?))
     struct mock-call ([args list?] [results list?])
     mock-called-with? (-> list? mock? boolean?)
@@ -26,7 +26,7 @@ provide
   (define-values (req-kws all-kws) (procedure-keywords proc-to-wrap))
   (procedure-reduce-keyword-arity wrapper-proc arity req-kws all-kws))
 
-(define (make-mock proc)
+(define (make-mock proc [results-proc proc])
   (define calls (box '()))
   (define (add-call! call)
     (set-box! calls (cons call (unbox calls))))
@@ -34,7 +34,7 @@ provide
     (make-keyword-procedure
      (λ (kws kw-vs . vs)
        (define results
-         (call-with-values (λ _ (keyword-apply proc kws kw-vs vs))
+         (call-with-values (λ _ (keyword-apply results-proc kws kw-vs vs))
                            list))
        (define all-vs (append vs (map list kws kw-vs)))
        (add-call! (mock-call all-vs  results))
