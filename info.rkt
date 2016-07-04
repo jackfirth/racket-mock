@@ -5,6 +5,7 @@
   '("base"
     "fancy-app"
     "rackunit-lib"
+    "reprovide"
     "scribble-lib"
     "sweet-exp"
     "unstable-lib"))
