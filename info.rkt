@@ -5,7 +5,7 @@
   '("base"
     "fancy-app"
     "rackunit-lib"
-    "reprovide"
+    "reprovide-lang"
     "scribble-lib"
     "sweet-exp"
     "unstable-lib"))
