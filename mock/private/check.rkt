@@ -19,6 +19,10 @@ provide
         (fail-check "Actual arguments did not match expected")))))
 
 
-(define-simple-check (check-mock-num-calls expected-num-calls mock)
-  (equal? (mock-num-calls mock) expected-num-calls))
+(define-check (check-mock-num-calls expected-num-calls mock)
+  (let ([result (equal? (mock-num-calls mock) expected-num-calls)])
+    (with-check-info
+      [('expected expected-num-calls) ('actual (mock-num-calls mock))]
+      (unless result
+        (fail-check "Actual amount of calls did not match expected")))))
 
