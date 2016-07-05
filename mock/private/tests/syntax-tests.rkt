@@ -4,12 +4,17 @@ require rackunit
         mock
 
 
-(define/mock (displayln-twice v)
-  ([displayln (void-mock)])
+(define not-mock? (compose not mock?))
+
+(define/mock (displayln-test v)
+  #:in-submod mock-test
+  #:mock displayln #:as displayln-mock
   (displayln v)
   (displayln v))
 
-(check-false (mock? displayln))
-
+(check-pred not-mock? displayln)
+(module+ mock-test
+  (check-pred not-mock? displayln)
+  (check-pred mock? displayln-mock))
 (module+ test
-  (check-true (mock? displayln)))
+  (require (submod ".." mock-test)))
