@@ -2,7 +2,7 @@
 (define collection 'multi)
 (define version "0.2")
 (define deps
-  '("base"
+  '(("base" '#:version "6.3")
     "fancy-app"
     "rackunit-lib"
     "reprovide-lang"
