@@ -1,7 +1,9 @@
 #lang sweet-exp racket/base
 
-require racket/bool
+require fancy-app
+        racket/bool
         racket/contract
+        racket/function
         racket/splicing
         rackunit
         unstable/sequence
@@ -11,65 +13,62 @@ provide
     mock? predicate/c
     make-mock (-> procedure? mock?)
     mock-calls (-> mock? (listof mock-call?))
-    struct mock-call ([args list?] [results list?])
-    mock-called-with? (-> list? mock? boolean?)
+    struct mock-call ([args list?] [kwargs (hash/c keyword? any/c)] [results list?])
+    mock-called-with? (-> mock? list? (hash/c keyword? any/c) boolean?)
     mock-num-calls (-> mock? exact-nonnegative-integer?)
+
+module+ test
+  require rackunit
+          racket/format
 
 
 (struct mock (proc calls-box)
   #:property prop:procedure (struct-field-index proc))
 
-(struct mock-call (args results) #:prefab)
+(struct mock-call (args kwargs results) #:transparent)
 
 (define (ensure-same-keyword-arity proc-to-wrap wrapper-proc)
   (define arity (procedure-arity proc-to-wrap))
   (define-values (req-kws all-kws) (procedure-keywords proc-to-wrap))
   (procedure-reduce-keyword-arity wrapper-proc arity req-kws all-kws))
 
+(define (box-transform! a-box f)
+  (set-box! a-box (f (unbox a-box))))
+
 (define (make-mock proc)
   (define calls (box '()))
-  (define (add-call! call)
-    (set-box! calls (cons call (unbox calls))))
+  (define (add-call! call) (box-transform! calls (cons call _)))
   (define wrapper
     (make-keyword-procedure
      (λ (kws kw-vs . vs)
        (define results
-         (call-with-values (λ _ (keyword-apply proc kws kw-vs vs))
+         (call-with-values (thunk (keyword-apply proc kws kw-vs vs))
                            list))
-       (define all-vs (append vs (map list kws kw-vs)))
-       (add-call! (mock-call all-vs  results))
+       (define kwargs (make-immutable-hasheq (map cons kws kw-vs)))
+       (add-call! (mock-call vs kwargs results))
        (apply values results))))
-  (define wrapper-with-proper-keyword-args
-    (ensure-same-keyword-arity proc wrapper))
-  (mock wrapper-with-proper-keyword-args calls))
+  (mock (ensure-same-keyword-arity proc wrapper) calls))
 
-(define (mock-calls mock)
-  (unbox (mock-calls-box mock)))
+(define mock-calls (compose unbox mock-calls-box))
 
-(define (mock-called-with? args mock)
-  ;; For user convenience, don't require the keywords to be sorted.
-  (define member? (compose not not member))
+(define (mock-called-with? mock args kwargs)
   (for/or ([call (in-list (mock-calls mock))])
-    (for/and ([arg (in-list args)])
-      (member? arg (mock-call-args call)))))
+    (and (equal? args (mock-call-args call))
+         (equal? kwargs (mock-call-kwargs call)))))
 
-(define (mock-num-calls mock)
-  (length (mock-calls mock)))
+(define mock-num-calls (compose length mock-calls))
 
-(module* test racket/base
-  (require rackunit
-           racket/format
-           (submod ".."))
+(module+ test
   (define m (make-mock ~a))
   (check-equal? (call-with-values (λ _ (procedure-keywords ~a)) list)
                 (call-with-values (λ _ (procedure-keywords m)) list))
   (check-equal? (m 0) "0")
   (check-equal? (m 0 #:width 3 #:align 'left) "0  ")
+  
   (check-equal? (mock-calls m)
-                '(#s(mock-call (0 [#:align left] [#:width 3]) ("0  "))
-                  #s(mock-call (0) ("0"))))
+                (list (mock-call '(0) (hasheq '#:width 3 '#:align 'left) '("0  "))
+                      (mock-call '(0) (hasheq) '("0"))))
   (check-equal? (mock-num-calls m) 2)
-  (check-true (mock-called-with? '(0) m))
-  (check-true (mock-called-with? '(0 [#:align left] [#:width 3]) m))
-  (check-true (mock-called-with? '(0 [#:width 3] [#:align left]) m))
-  (check-false (mock-called-with? '(42) m)))
+  (check-true (mock-called-with? m '(0) (hasheq)))
+  (check-true (mock-called-with? m '(0) (hasheq '#:align 'left '#:width 3)))
+  (check-false (mock-called-with? m '(42) (hasheq))))
