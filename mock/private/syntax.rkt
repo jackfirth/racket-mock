@@ -3,7 +3,6 @@
 require racket/splicing
         syntax/parse/define
         "base.rkt"
-        "predefined.rkt"
         for-syntax racket/base
                    syntax/parse
 
@@ -21,15 +20,17 @@ provide define/mock
   (define-splicing-syntax-class mock-clause
     (pattern (~seq #:mock id:id
                    (~optional (~seq #:as given-submod-id:id))
-                   (~optional (~seq #:with-default given-default:expr)))
+                   (~optional (~seq #:with-behavior given-behavior:expr)))
              #:attr submod-id
              (or (attribute given-submod-id) #'id)
-             #:attr default
-             (or (attribute given-default) #'(void-mock))
+             #:attr mock-value
+             (if (attribute given-behavior)
+                 #'(make-mock given-behavior)
+                 #'(make-mock))
              #:attr explicit-form
-             #'(id submod-id default)))
+             #'(id submod-id mock-value)))
   (define-syntax-class explicit-mock-clause
-    (pattern (id:id submod-id:id default:expr))))
+    (pattern (id:id submod-id:id mock-value:expr))))
 
 (define-simple-macro
   (define/mock-explicit header:definition-header
@@ -42,7 +43,7 @@ provide define/mock
       header.id)
     (define header.id (mock-constructor mock-clause.id ...))
     (module+ submod.id
-      (define mock-clause.submod-id mock-clause.default) ...
+      (define mock-clause.submod-id mock-clause.mock-value) ...
       (define header.id (mock-constructor mock-clause.submod-id ...)))))
 
 (define-syntax-parser define/mock

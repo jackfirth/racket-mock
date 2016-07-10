@@ -13,8 +13,10 @@ require rackunit
   (displayln v))
 
 (check-pred not-mock? displayln)
+
 (module+ mock-test
   (check-pred not-mock? displayln)
   (check-pred mock? displayln-mock))
+
 (module+ test
   (require (submod ".." mock-test)))

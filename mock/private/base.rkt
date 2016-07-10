@@ -6,7 +6,7 @@ provide
   with-mock-behavior
   contract-out
     mock? predicate/c
-    make-mock (-> procedure? mock?)
+    make-mock (->* () (procedure?) mock?)
     mock-reset! (-> mock? void?)
     struct (exn:fail:unexpected-call exn:fail)
       ([message string?]
