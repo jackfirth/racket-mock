@@ -7,6 +7,7 @@ provide
   contract-out
     mock? predicate/c
     make-mock (-> procedure? mock?)
+    mock-reset! (-> mock? void?)
     struct (exn:fail:unexpected-call exn:fail)
       ([message string?]
        [continuation-marks continuation-mark-set?]
@@ -92,26 +93,38 @@ module+ test
 (define mock-num-calls (compose length mock-calls))
 
 (module+ test
-  (define m (make-mock ~a))
-  (check-equal? (m 0) "0")
-  (check-equal? (m 0 #:width 3 #:align 'left) "0  ")
-  (check-equal? (mock-calls m)
-                (list (mock-call '(0) (hash) '("0"))
-                      (mock-call '(0) (hash '#:width 3 '#:align 'left) '("0  "))))
-  (check-equal? (mock-num-calls m) 2)
-  (check-true (mock-called-with? m '(0) (hash)))
-  (check-true (mock-called-with? m '(0) (hash '#:align 'left '#:width 3)))
-  (check-false (mock-called-with? m '(42) (hash))))
+  (test-case "Standard mock use cases"
+    (define m (make-mock ~a))
+    (check-equal? (m 0) "0")
+    (check-equal? (m 0 #:width 3 #:align 'left) "0  ")
+    (check-equal? (mock-calls m)
+                  (list (mock-call '(0) (hash) '("0"))
+                        (mock-call '(0) (hash '#:width 3 '#:align 'left) '("0  "))))
+    (check-equal? (mock-num-calls m) 2)
+    (check-true (mock-called-with? m '(0) (hash)))
+    (check-true (mock-called-with? m '(0) (hash '#:align 'left '#:width 3)))
+    (check-false (mock-called-with? m '(42) (hash))))
+  (test-case "Default mock behavior throws"
+    (check-exn exn:fail:unexpected-call?
+               (thunk ((make-mock) 10 #:foo 'bar)))))
+
+(define (mock-reset! a-mock)
+  (set-box! (mock-calls-box a-mock) '()))
+
+(module+ test
+  (test-case "Resetting mocks"
+    (define m (make-mock void))
+    (m 'foo)
+    (check-equal? (mock-num-calls m) 1)
+    (mock-reset! m)
+    (check-equal? (mock-num-calls m) 0)))
 
 (define-simple-macro (with-mock-behavior ([mock:expr new-behavior:expr] ...) body ...)
   (parameterize ([(mock-behavior mock) new-behavior] ...) body ...))
 
 (module+ test
-  (define num-proc-mock (make-mock add1))
-  (check-equal? (num-proc-mock 0) 1)
-  (with-mock-behavior ([num-proc-mock sub1])
-    (check-equal? (num-proc-mock 0) -1)))
-
-(module+ test
-  (check-exn exn:fail:unexpected-call?
-             (thunk ((make-mock) 10 #:foo 'bar))))
+  (test-case "Changing mock behavior"
+    (define num-proc-mock (make-mock add1))
+    (check-equal? (num-proc-mock 0) 1)
+    (with-mock-behavior ([num-proc-mock sub1])
+      (check-equal? (num-proc-mock 0) -1))))
