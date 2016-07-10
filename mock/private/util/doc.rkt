@@ -1,7 +1,7 @@
 #lang sweet-exp racket/base
 
 require
-  scribble/eval
+  scribble/example
   for-label mock
             racket/base
             racket/contract
@@ -15,15 +15,8 @@ provide
                  racket/contract
                  rackunit
 
+(define (make-mock-eval)
+  (make-base-eval #:lang 'racket/base '(require mock racket/format)))
 
-(define-syntax-rule (define-examples-form id require-spec ...)
-  (begin
-    (define (eval-factory)
-      (define base-eval (make-base-eval))
-      (base-eval '(require require-spec)) ...
-      base-eval)
-    (define-syntax-rule (id datum (... ...))
-      (examples #:eval (eval-factory) datum (... ...)))))
-
-
-(define-examples-form mock-examples mock)
+(define-syntax-rule (mock-examples example ...)
+   (examples #:eval (make-mock-eval) example ...))

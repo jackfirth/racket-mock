@@ -36,5 +36,5 @@
     (define foo-bar-mock (case-mock 'foo 1 'bar 2))
     (foo-bar-mock 'foo)
     (foo-bar-mock 'bar)
-    (foo-bar-mock 'unexpected)
+    (eval:error (foo-bar-mock 'unexpected))
 ]}
