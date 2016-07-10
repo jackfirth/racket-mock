@@ -38,6 +38,15 @@
             #:transparent]{
  An exception type used by mocks that don't expect to be called at all.}
 
+@defproc[(mock-reset! [mock mock?]) void?]{
+ Removes the history of procedure calls in @racket[mock].
+ @mock-examples[
+ (define m (make-mock void))
+ (m 'foo)
+ (mock-num-calls m)
+ (mock-reset! m)
+ (mock-num-calls m)]}
+
 @defform[(with-mock-behavior ([mock-expr proc-expr] ...) body ...)
          #:contracts ([mock-expr mock?] [proc-expr procedure?])]{
  Evaluates each @racket[mock-expr] and @racket[proc-expr] which must
