@@ -25,6 +25,21 @@
  (mock? quotient/remainder-mock)
  ]}
 
+@defform[(with-mock-behavior ([mock-expr proc-expr] ...) body ...)
+         #:contracts ([mock-expr mock?] [proc-expr procedure?])]{
+ Evaluates each @racket[mock-expr] and @racket[proc-expr] which must
+ be a @racket[mock?] and a @racket[procedure?], then alters the mock's
+ behavior in the dynamic extent of @racket[(body ...)] to the given
+ procedure. This allows the same mock to behave differently between
+ calls, which is useful for @racket[define/mock].
+ @mock-examples[
+ (define a-mock (make-mock add1))
+ (a-mock 10)
+ (with-mock-behavior ([a-mock sub1])
+   (a-mock 10))
+ (a-mock 10)
+ (mock-calls a-mock)]}
+
 @defstruct*[mock-call ([args list?] [kwargs (hash/c keyword? any/c)] [results list?]) #:transparent]{
  A structure containg the arguments and result
  values of a single call to a @racket[mock?].

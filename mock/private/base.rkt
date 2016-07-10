@@ -70,7 +70,7 @@ module+ test
   (check-true (mock-called-with? m '(0) (hash '#:align 'left '#:width 3)))
   (check-false (mock-called-with? m '(42) (hash))))
 
-(define-simple-macro (with-mock-behavior ([mock:id new-behavior:expr] ...) body ...)
+(define-simple-macro (with-mock-behavior ([mock:expr new-behavior:expr] ...) body ...)
   (parameterize ([(mock-behavior mock) new-behavior] ...) body ...))
 
 (module+ test
