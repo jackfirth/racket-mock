@@ -31,6 +31,32 @@ module+ test
 
 (define (kws+vs->kwargs kws vs) (make-immutable-hash (map cons kws vs)))
 
+(define (format-positional-args-message args)
+  (apply string-append
+         (for/list ([v args])
+           (format "\n   ~a" v))))
+
+(define (format-keyword-args-message kwargs)
+  (apply string-append
+         (for/list ([(kw v) kwargs])
+           (format "\n   ~a: ~a" kw v))))
+
+(struct exn:fail:unexpected-call exn:fail (args kwargs) #:transparent)
+(define unexpected-call-message-format
+  "mock: unexpectedly called with arguments\n  positional: ~a\n  keyword: ~a")
+
+(define raise-unexpected-call-exn
+  (make-keyword-procedure
+   (λ (kws kw-vs . vs)
+     (define kwargs (kws+vs->kwargs kws kw-vs))
+     (define message
+       (format unexpected-call-message-format
+               (format-positional-args-message vs)
+               (format-keyword-args-message kwargs)))
+     (raise
+      (exn:fail:unexpected-call
+       message (current-continuation-marks) vs kwargs)))))
+
 (define call-mock-behavior
   (make-keyword-procedure
    (λ (kws kw-vs a-mock . vs)
@@ -47,8 +73,8 @@ module+ test
 (define (add-call! calls-box call)
   (box-transform! calls-box (append _ (list call))))
 
-(define (make-mock proc)
-  (mock (make-parameter proc) (box '())))
+(define (make-mock [behavior raise-unexpected-call-exn])
+  (mock (make-parameter behavior) (box '())))
 
 (define (mock-called-with? mock args kwargs)
   (for/or ([call (in-list (mock-calls mock))])
@@ -78,3 +104,7 @@ module+ test
   (check-equal? (num-proc-mock 0) 1)
   (with-mock-behavior ([num-proc-mock sub1])
     (check-equal? (num-proc-mock 0) -1)))
+
+(module+ test
+  (check-exn exn:fail:unexpected-call?
+             (thunk ((make-mock) 10 #:foo 'bar))))
