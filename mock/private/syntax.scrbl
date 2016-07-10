@@ -19,20 +19,21 @@ at once.
                     [mock-as (code:line)
                      (code:line #:as mock-as-id)]
                     [mock-default (code:line)
-                     (code:line #:with-default mock-expr)])
-         #:contracts ([mock-expr mock?])]{
+                     (code:line #:with-behavior behavior-expr)])
+         #:contracts ([behavior-expr procedure?])]{
  Like @racket[define], except in @racket[submod-id] which defaults to @racket[test].
  In that submodule, a different implementation is defined which uses mocks for each
- @racket[mock-id]. Each mock uses @racket[mock-expr] or @racket[(void-mock)] if none
- is provided, and is bound to @racket[mock-as-id] or @racket[mock-id] in the mocking
- submodule. This allows code in the mocking submodule to use the mocks with testing
- procedures such as @racket[check-mock-called-with?]. This form can only be used at
- the module level, as its expansion produces code in a submodule.
+ @racket[mock-id]. Each mock uses @racket[beavhior-expr] as its behavior or
+ @racket[raise-unexpected-call-exn] if none is provided, and is bound to
+ @racket[mock-as-id] or @racket[mock-id] in the mocking submodule. This allows code
+ in the mocking submodule to use the mocks with testing procedures such as
+ @racket[check-mock-called-with?]. This form can only be used at the module level,
+ as its expansion produces code in a submodule.
  @mock-examples[
  (module m racket
    (require mock)
    (define/mock (my-displayln v)
-     #:mock displayln
+     #:mock displayln #:with-behavior void
      (displayln v))
    (my-displayln "sent to real displayln")
    (mock? my-displayln)
@@ -47,7 +48,7 @@ at once.
    (require mock)
    (define/mock (my-displayln v)
      #:in-submod test
-     #:mock displayln #:as displayln #:with-default (void-mock)
+     #:mock displayln #:as displayln #:with-behavior void
      (displayln v))
    (my-displayln "sent to real displayln")
    (mock? my-displayln)
