@@ -7,6 +7,12 @@ provide
   contract-out
     mock? predicate/c
     make-mock (-> procedure? mock?)
+    struct (exn:fail:unexpected-call exn:fail)
+      ([message string?]
+       [continuation-marks continuation-mark-set?]
+       [args list?]
+       [kwargs (hash/c keyword? any/c)])
+    raise-unexpected-call-exn procedure?
     mock-calls (-> mock? (listof mock-call?))
     struct mock-call
       [args list?] [kwargs (hash/c keyword? any/c)] [results list?]
