@@ -8,7 +8,8 @@ provide
     mock? predicate/c
     make-mock (-> procedure? mock?)
     mock-calls (-> mock? (listof mock-call?))
-    struct mock-call ([args list?] [kwargs (hash/c keyword? any/c)] [results list?])
+    struct mock-call
+      [args list?] [kwargs (hash/c keyword? any/c)] [results list?]
     mock-called-with? (-> mock? list? (hash/c keyword? any/c) boolean?)
     mock-num-calls (-> mock? exact-nonnegative-integer?)
 
