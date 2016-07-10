@@ -29,14 +29,15 @@ module+ test
 (define-syntax-rule (with-values-as-list body ...)
   (call-with-values (thunk body ...) list))
 
+(define (kws+vs->kwargs kws vs) (make-immutable-hash (map cons kws vs)))
+
 (define call-mock-behavior
   (make-keyword-procedure
    (λ (kws kw-vs a-mock . vs)
      (match-define (mock current-behavior calls-box) a-mock)
      (define results
        (with-values-as-list (keyword-apply (current-behavior) kws kw-vs vs)))
-     (define kwargs (make-immutable-hash (map cons kws kw-vs)))
-     (add-call! calls-box (mock-call vs kwargs results))
+     (add-call! calls-box (mock-call vs (kws+vs->kwargs kws kw-vs) results))
      (apply values results))))
 
 (struct mock-call (args kwargs results) #:transparent)
