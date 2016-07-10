@@ -7,7 +7,7 @@
  Predicate identifying mocks.
  @mock-examples[
  (mock? (make-mock void))
- (mock? void?)
+ (mock? void)
  ]}
 
 @defproc[(make-mock [proc procedure?]) mock?]{
