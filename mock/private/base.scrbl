@@ -7,10 +7,10 @@
  Predicate identifying mocks.
  @mock-examples[
  (mock? (make-mock void))
- (mock? void?)
+ (mock? void)
  ]}
 
-@defproc[(make-mock [proc procedure?]) mock?]{
+@defproc[(make-mock [proc procedure? raise-unexpected-call-exn]) mock?]{
  Returns a mocked version of @racket[proc]. The
  mock may be used in place of @racket[proc] anywhere
  and behaves just like @racket[proc]. When used
@@ -24,6 +24,19 @@
  (quotient/remainder-mock 10 3)
  (mock? quotient/remainder-mock)
  ]}
+
+@defthing[#:kind "procedure" raise-unexpected-call-exn procedure?]{
+ A procedure that accepts any number of positional or keyword arguments
+ and always @racket[raise]s @racket[exn:fail:unexpected-call]. This is
+ the default behavior for mocks, see @racket[make-mock]. The exception
+ message details each positional and keyword argument given.
+ @mock-examples[
+ (eval:error (raise-unexpected-call-exn 5 #:foo 'bar))]}
+
+@defstruct*[(exn:fail:unexpected-call exn:fail)
+            ([args list?] [kwargs (hash/c keyword? any/c)])
+            #:transparent]{
+ An exception type used by mocks that don't expect to be called at all.}
 
 @defform[(with-mock-behavior ([mock-expr proc-expr] ...) body ...)
          #:contracts ([mock-expr mock?] [proc-expr procedure?])]{
