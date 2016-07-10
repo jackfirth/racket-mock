@@ -37,14 +37,14 @@ module+ test
 
 (define (make-mock proc)
   (define calls (box '()))
-  (define (add-call! call) (box-transform! calls (cons call _)))
+  (define (add-call! call) (box-transform! calls (append _ (list call))))
   (define wrapper
     (make-keyword-procedure
      (λ (kws kw-vs . vs)
        (define results
          (call-with-values (thunk (keyword-apply proc kws kw-vs vs))
                            list))
-       (define kwargs (make-immutable-hasheq (map cons kws kw-vs)))
+       (define kwargs (make-immutable-hash (map cons kws kw-vs)))
        (add-call! (mock-call vs kwargs results))
        (apply values results))))
   (mock (ensure-same-keyword-arity proc wrapper) calls))
@@ -66,9 +66,9 @@ module+ test
   (check-equal? (m 0 #:width 3 #:align 'left) "0  ")
   
   (check-equal? (mock-calls m)
-                (list (mock-call '(0) (hasheq '#:width 3 '#:align 'left) '("0  "))
-                      (mock-call '(0) (hasheq) '("0"))))
+                (list (mock-call '(0) (hash) '("0"))
+                      (mock-call '(0) (hash '#:width 3 '#:align 'left) '("0  "))))
   (check-equal? (mock-num-calls m) 2)
-  (check-true (mock-called-with? m '(0) (hasheq)))
-  (check-true (mock-called-with? m '(0) (hasheq '#:align 'left '#:width 3)))
-  (check-false (mock-called-with? m '(42) (hasheq))))
+  (check-true (mock-called-with? m '(0) (hash)))
+  (check-true (mock-called-with? m '(0) (hash '#:align 'left '#:width 3)))
+  (check-false (mock-called-with? m '(42) (hash))))
