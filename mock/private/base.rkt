@@ -6,7 +6,7 @@ provide
   with-mock-behavior
   contract-out
     mock? predicate/c
-    make-mock (->* () (procedure?) mock?)
+    mock (->* () (#:name string? #:behavior procedure?) mock?)
     mock-reset! (-> mock? void?)
     mock-calls (-> mock? (listof mock-call?))
     struct mock-call ([args arguments?] [results list?])
@@ -34,7 +34,8 @@ module+ test
 (define call-mock-behavior
   (make-keyword-procedure
    (λ (kws kw-vs a-mock . vs)
-     (match-define (mock current-behavior calls-box) a-mock)
+     (define current-behavior (mock-behavior a-mock))
+     (define calls-box (mock-calls-box a-mock))
      (define results
        (with-values-as-list (keyword-apply (current-behavior) kws kw-vs vs)))
      (define args (make-arguments vs (kws+vs->hash kws kw-vs)))
@@ -43,30 +44,35 @@ module+ test
 
 (struct mock-call (args results) #:transparent)
 (struct mock (behavior calls-box)
-  #:property prop:procedure call-mock-behavior)
+  #:property prop:procedure call-mock-behavior
+  #:constructor-name make-mock
+  #:omit-define-syntaxes)
 
 (define (add-call! calls-box call)
   (box-transform! calls-box (append _ (list call))))
 
-(define (make-mock [behavior (make-raise-unexpected-arguments-exn "mock")])
-  (mock (make-parameter behavior) (box '())))
+(define (mock #:behavior [given-behavior #f] #:name [name "mock"])
+  (define behavior
+    (or given-behavior (make-raise-unexpected-arguments-exn name)))
+  (make-mock (make-parameter behavior) (box '())))
 
 (define mock-calls (compose unbox mock-calls-box))
 
 (module+ test
   (test-case "Mocks should record calls made with them"
-    (define m (make-mock ~a))
+    (define m (mock #:behavior ~a))
     (check-equal? (m 0) "0")
     (check-equal? (m 0 #:width 3 #:align 'left) "0  ")
     (check-equal? (mock-calls m)
                   (list (mock-call (arguments 0) '("0"))
-                        (mock-call (arguments 0 #:width 3 #:align 'left) '("0  "))))))
+                        (mock-call (arguments 0 #:width 3 #:align 'left)
+                                   '("0  "))))))
 
 (define mock-num-calls (compose length mock-calls))
 
 (module+ test
   (test-case "Mocks should record how many times they've been called"
-    (define m (make-mock ~a))
+    (define m (mock #:behavior ~a))
     (check-equal? (m 0) "0")
     (check-equal? (m 1) "1")
     (check-equal? (m 2) "2")
@@ -78,7 +84,7 @@ module+ test
 
 (module+ test
   (test-case "Mock call arguments should be queryable"
-    (define m (make-mock void))
+    (define m (mock #:behavior void))
     (m 0)
     (m 10)
     (check-true (mock-called-with? m (arguments 0)))
@@ -86,14 +92,14 @@ module+ test
     (check-false (mock-called-with? m (arguments 42))))
   (test-case "Default mock behavior should throw"
     (check-exn exn:fail:unexpected-arguments?
-               (thunk ((make-mock) 10 #:foo 'bar)))))
+               (thunk ((mock) 10 #:foo 'bar)))))
 
 (define (mock-reset! a-mock)
   (set-box! (mock-calls-box a-mock) '()))
 
 (module+ test
   (test-case "Resetting a mock should erase its call history"
-    (define m (make-mock void))
+    (define m (mock #:behavior void))
     (m 'foo)
     (check-equal? (mock-num-calls m) 1)
     (mock-reset! m)
@@ -104,7 +110,7 @@ module+ test
 
 (module+ test
   (test-case "Mock behavior should be changeable"
-    (define num-proc-mock (make-mock add1))
+    (define num-proc-mock (mock #:behavior add1))
     (check-equal? (num-proc-mock 0) 1)
     (with-mock-behavior ([num-proc-mock sub1])
       (check-equal? (num-proc-mock 0) -1))))
