@@ -1,5 +1,5 @@
 #lang scribble/manual
-@(require "util/doc.rkt")
+@(require "util-doc.rkt")
 
 @title{Mocking Out Functions for Testing}
 

@@ -1,6 +1,6 @@
 #lang scribble/manual
 
-@(require "util/doc.rkt")
+@(require "util-doc.rkt")
 
 @title{RackUnit Checks for Mocks}
 

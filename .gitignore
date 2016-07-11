@@ -1,8 +1,9 @@
-**/compiled/*
-**/*.bak
-**/*.html
-**/*.css
-**/*.js
 *~
-**.rktd
-**.sxref
+*.bak
+*.css
+*.html
+*.js
+*.rktd
+*.sxref
+compiled
+doc

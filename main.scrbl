@@ -1,6 +1,6 @@
 #lang scribble/manual
 
-@(require "private/util/doc.rkt")
+@(require "private/util-doc.rkt")
 
 @title{Mocks}
 @defmodule[mock]

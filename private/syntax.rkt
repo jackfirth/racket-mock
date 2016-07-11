@@ -8,6 +8,11 @@ require racket/splicing
 
 provide define/mock
 
+module+ mock-test-setup
+  require rackunit
+  module+ mock-test
+    require rackunit
+
 (begin-for-syntax
   (define-syntax-class definition-header
     (pattern (~or root-id:id
@@ -57,3 +62,21 @@ provide define/mock
          #:in-submod submod-id
          #:mocks (mock.explicit-form ...)
          body ...))])
+
+(module+ mock-test-setup
+  (define not-mock? (compose not mock?))
+  
+  (define/mock (displayln-test v)
+    #:in-submod mock-test
+    #:mock displayln #:as displayln-mock
+    (displayln v)
+    (displayln v))
+  
+  (check-pred not-mock? displayln)
+  
+  (module+ mock-test
+    (check-pred not-mock? displayln)
+    (check-pred mock? displayln-mock)))
+
+(module+ test
+  (require (submod ".." mock-test-setup mock-test)))

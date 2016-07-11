@@ -11,11 +11,14 @@ before_install:
   - git clone https://github.com/greghendershott/travis-racket.git ../travis-racket
   - cat ../travis-racket/install-racket.sh | bash
   - export PATH="${RACKET_DIR}/bin:${PATH}"
+  - raco pkg install cover cover-coveralls doc-coverage
 
-install: raco pkg install --deps search-auto $TRAVIS_BUILD_DIR
+install:
+  - raco pkg install --auto $TRAVIS_BUILD_DIR
 
 script:
  - raco test $TRAVIS_BUILD_DIR
+ - raco doc-coverage mock
 
 after_success:
  - raco cover -f coveralls -d $TRAVIS_BUILD_DIR/coverage .
