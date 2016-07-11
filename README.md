@@ -15,14 +15,17 @@ Example:
 
 ```racket
 (require mock)
+
 (define/mock (displayln-twice v)
   ; in the test submodule, call `void` instead of `displayln`
   #:mock displayln #:with-behavior void
   (displayln v)
   (displayln v))
+
 (displayln-twice "sent to real displayln") ; prints out twice
 (mock? displayln) ; #f
 (mock-num-calls displayln) ; error - displayln isn't a mock
+
 (module+ test
   (displayln-twice "sent to mock displayln") ; doesn't print anything
   (mock? displayln) ; #t
