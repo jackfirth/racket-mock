@@ -1,5 +1,5 @@
 #lang scribble/manual
-@(require "util/doc.rkt")
+@(require "util-doc.rkt")
 
 @title{Arguments structure}
 Mocks record procedure calls partly via an @racket[arguments] structure.

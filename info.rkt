@@ -1,5 +1,6 @@
 #lang info
-(define collection 'multi)
+(define collection "mock")
+(define scribblings '(("main.scrbl" () (library) "mock")))
 (define version "0.6")
 (define deps
   '(("base" #:version "6.4")
@@ -10,14 +11,9 @@
     "sweet-exp"
     "unstable-lib"))
 (define build-deps
-  '("cover"
-    "rackunit-lib"
+  '("rackunit-lib"
     "rackunit-doc"
-    "racket-doc"
-    "doc-coverage"))
+    "racket-doc"))
 (define test-omit-paths
-  '("mock/main.scrbl"
-    "mock/private/base.scrbl"
-    "mock/private/check.scrbl"
-    "mock/private/predefined.scrbl"
-    "mock/private/syntax.scrbl"))
+  '(#rx"\\.scrbl$"
+    #rx"info\\.rkt$"))
