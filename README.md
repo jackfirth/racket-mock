@@ -16,7 +16,8 @@ Example:
 ```racket
 (require mock)
 (define/mock (displayln-twice v)
-  #:mock displayln ; in the test submodule, calls a mock instead of displayln
+  ; in the test submodule, call `void` instead of `displayln`
+  #:mock displayln #:with-behavior void
   (displayln v)
   (displayln v))
 (displayln-twice "sent to real displayln") ; prints out twice
