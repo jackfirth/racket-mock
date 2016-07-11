@@ -39,7 +39,7 @@ at once.
    (mock? my-displayln)
    (module+ test
      (my-displayln "sent to mock displayln")
-     (mock? my-displayln)))
+     (mock? displayln)))
  (require 'm)
  (require (submod 'm test))]
  The above example relies on default behavior. It is equivalent to the following:
@@ -54,6 +54,6 @@ at once.
    (mock? my-displayln)
    (module+ test
      (my-displayln "sent to mock displayln")
-     (mock? my-displayln)))
+     (mock? displayln)))
  (require 'm)
  (require (submod 'm test))]}
