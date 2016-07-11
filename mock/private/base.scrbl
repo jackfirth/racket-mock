@@ -7,10 +7,9 @@
  Predicate identifying mocks.
  @mock-examples[
  (mock? (make-mock void))
- (mock? void)
- ]}
+ (mock? void)]}
 
-@defproc[(make-mock [proc procedure? raise-unexpected-call-exn]) mock?]{
+@defproc[(make-mock [proc procedure? (make-raise-unexpected-arguments-exn "mock")]) mock?]{
  Returns a mocked version of @racket[proc]. The
  mock may be used in place of @racket[proc] anywhere
  and behaves just like @racket[proc]. When used
@@ -23,20 +22,8 @@
  (define quotient/remainder-mock (make-mock quotient/remainder))
  (quotient/remainder-mock 10 3)
  (mock? quotient/remainder-mock)
- ]}
-
-@defthing[#:kind "procedure" raise-unexpected-call-exn procedure?]{
- A procedure that accepts any number of positional or keyword arguments
- and always @racket[raise]s @racket[exn:fail:unexpected-call]. This is
- the default behavior for mocks, see @racket[make-mock]. The exception
- message details each positional and keyword argument given.
- @mock-examples[
- (eval:error (raise-unexpected-call-exn 5 #:foo 'bar))]}
-
-@defstruct*[(exn:fail:unexpected-call exn:fail)
-            ([args list?] [kwargs (hash/c keyword? any/c)])
-            #:transparent]{
- An exception type used by mocks that don't expect to be called at all.}
+ (define uncallable-mock (make-mock))
+ (eval:error (uncallable-mock 1 2 3 #:foo 'bar #:bar "blah"))]}
 
 @defproc[(mock-reset! [mock mock?]) void?]{
  Removes the history of procedure calls in @racket[mock].
@@ -62,10 +49,9 @@
  (a-mock 10)
  (mock-calls a-mock)]}
 
-@defstruct*[mock-call ([args list?] [kwargs (hash/c keyword? any/c)] [results list?]) #:transparent]{
- A structure containg the arguments and result
- values of a single call to a @racket[mock?].
-}
+@defstruct*[mock-call ([args arguments?] [results list?]) #:transparent]{
+ A structure containg the arguments and result values of a single call
+ to a @racket[mock?].}
 
 @defproc[(mock-calls [mock mock?]) (listof mock-call?)]{
  Returns a list of all the @racket[mock-call]s made
@@ -78,19 +64,16 @@
  (define quotient/remainder-mock (make-mock quotient/remainder))
  (quotient/remainder-mock 10 3)
  (quotient/remainder-mock 3 2)
- (mock-calls quotient/remainder-mock)
- ]}
+ (mock-calls quotient/remainder-mock)]}
 
-@defproc[(mock-called-with? [mock mock?] [args list?] [kwargs (hash/c keyword? any/c)])
+@defproc[(mock-called-with? [mock mock?] [args arguments?])
          boolean?]{
  Returns @racket[#t] if @racket[mock] has ever been
- called with positional arguments that are @racket[equal?] to
- @racket[args] and keyword arguments that are @racket[equal?]
- to @racket[kwargs], returns @racket[#f] otherwise.
+ called with @racket[args], returns @racket[#f] otherwise.
  @mock-examples[
  (define ~a-mock (make-mock ~a))
  (~a-mock 0 #:width 3 #:align 'left)
- (mock-called-with? ~a-mock '(0) (hash '#:align 'left '#:width 3))]}
+ (mock-called-with? ~a-mock (arguments 0 #:align 'left #:width 3))]}
 
 @defproc[(mock-num-calls [mock mock?])
          exact-nonnegative-integer?]{
@@ -100,5 +83,4 @@
  (define displayln-mock (make-mock displayln))
  (mock-num-calls displayln-mock)
  (displayln-mock "foo")
- (mock-num-calls displayln-mock)
- ]}
+ (mock-num-calls displayln-mock)]}

@@ -12,9 +12,9 @@
  has never been called with @racket[args] and @racket[kwargs].
  @mock-examples[
  (define mock (make-mock void))
- (check-mock-called-with? mock '(foo) (hash))
+ (check-mock-called-with? mock (arguments 'foo))
  (mock 'foo)
- (check-mock-called-with? mock '(foo) (hash))]}
+ (check-mock-called-with? mock (arguments 'foo))]}
 
 @defproc[(check-mock-num-calls [n exact-positive-integer?] [mock mock?])
          void?]{

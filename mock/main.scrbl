@@ -16,5 +16,6 @@ testing code that calls side-effectful operations and IO.
 source code: @url["https://github.com/jackfirth/racket-mock"]
 
 @include-section["private/base.scrbl"]
+@include-section["private/args.scrbl"]
 @include-section["private/check.scrbl"]
 @include-section["private/syntax.scrbl"]
