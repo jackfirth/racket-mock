@@ -59,11 +59,7 @@ module+ test
 
 (define (format-keyword-args-message kwargs)
   (apply string-append
-         (hash-map kwargs (format "\n   ~a: ~v" _ _) #t)))
-
-(module+ test
-  (check-equal? (format-keyword-args-message (hash '#:foo 'bar '#:baz "blah"))
-                "\n   #:baz: \"blah\"\n   #:foo: 'bar"))
+         (hash-map kwargs (format "\n   ~a: ~v" _ _))))
 
 (struct exn:fail:unexpected-arguments exn:fail (args) #:transparent)
 (define unexpected-call-message-format
