@@ -10,8 +10,8 @@ provide define/mock
 
 module+ mock-test-setup
   require rackunit
-  module+ mock-test
-    require rackunit
+          "args.rkt"
+          "check.rkt"
 
 (begin-for-syntax
   (define-syntax-class definition-header
@@ -20,6 +20,10 @@ module+ mock-test-setup
                        (subheader:definition-header (~or arg-clause kwarg-clause) ... . rest-arg:id)))
              #:attr id
              (or (attribute root-id) (attribute subheader.id))))
+  (define (replace-header-id header-stx new-id-stx)
+    (syntax-parse header-stx
+      [root-id:id new-id-stx]
+      [(header arg ...) #`(#,(replace-header-id #'header new-id-stx) arg ...)]))
   (define-splicing-syntax-class submod-clause
     (pattern (~seq #:in-submod id:id)))
   (define-splicing-syntax-class mock-clause
@@ -43,13 +47,14 @@ module+ mock-test-setup
     #:mocks (mock-clause:explicit-mock-clause ...)
     body ...+)
   (begin
-    (define (mock-constructor mock-clause.id ...)
-      (define header body ...)
-      header.id)
-    (define header.id (mock-constructor mock-clause.id ...))
+    (define-syntax-parser inject
+      [(inject id:id mock-clause.id ...)
+       (with-syntax ([header (replace-header-id #'header #'id)])
+         #'(define header body ...))])
+    (inject header.id mock-clause.id ...)
     (module+ submod.id
       (define mock-clause.submod-id mock-clause.mock-value) ...
-      (define header.id (mock-constructor mock-clause.submod-id ...)))))
+      (inject header.id mock-clause.submod-id ...))))
 
 (define-syntax-parser define/mock
   [(_ header:definition-header
@@ -66,17 +71,23 @@ module+ mock-test-setup
 (module+ mock-test-setup
   (define not-mock? (compose not mock?))
   
-  (define/mock (displayln-test v)
+  (define/mock (bar v)
     #:in-submod mock-test
-    #:mock displayln #:as displayln-mock
-    (displayln v)
+    #:mock foo #:as foo-mock #:with-behavior void
+    (foo v)
+    (foo v))
+  
+  (define (foo v)
     (displayln v))
   
-  (check-pred not-mock? displayln)
+  (check-pred not-mock? foo)
   
   (module+ mock-test
-    (check-pred not-mock? displayln)
-    (check-pred mock? displayln-mock)))
+    (check-pred not-mock? foo)
+    (check-pred mock? foo-mock)
+    (bar 20)
+    (check-mock-called-with? foo-mock (arguments 20))
+    (check-mock-num-calls 2 foo-mock)))
 
 (module+ test
   (require (submod ".." mock-test-setup mock-test)))
