@@ -17,5 +17,11 @@ provide
                     ['actual-calls (mock-calls mock)])
     (unless (mock-called-with? mock args) (fail-check no-calls-made-message))))
 
+(module+ test
+  (test-case "Should check if a mock's been called with given arguments"
+    (define m (mock #:behavior void))
+    (m 1 2 3)
+    (check-mock-called-with? m (arguments 1 2 3))))
+
 (define-simple-check (check-mock-num-calls expected-num-calls mock)
   (equal? (mock-num-calls mock) expected-num-calls))
