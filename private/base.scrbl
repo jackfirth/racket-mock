@@ -4,23 +4,24 @@
 @title{Basic Mock Construction}
 
 @defproc[(mock? [v any/c]) boolean?]{
- Predicate identifying mocks.
+ Predicate identifying @mock-tech{mocks}.
  @mock-examples[
  (mock? (mock #:behavior void))
  (mock? void)]}
 
-@defproc[(mock [#:behavior behavior procedure?
-                (make-raise-unexpected-arguments-exn name)]
+@defproc[(mock [#:behavior behavior-proc procedure? #f]
                [#:name name string? "mock"])
          mock?]{
- Returns a mock that records arguments its called with and results it returns.
- When called as a procedure, the returned @racket[mock?] forwards the arguments
- it's given to @racket[behavior] and records a @racket[mock-call] containing
- the arguments and result values in hidden mutable storage which can be queried
- later with @racket[mock-calls]. The mock's list of calls can be erased with
- @racket[mock-reset!], and it's behavior temporarily altered with
- @racket[with-mock-behavior]. If @racket[behavior] is not provided, the mock
- by default raises an error message in terms of @racket[name] whenever it's called.
+ Returns a @mock-tech{mock} that records arguments its called with and results
+ it returns. When called as a procedure, the mock consults its current
+ @define-behavior-tech{behavior}, a procedure initalized to @racket[behavior-proc]
+ that defines how the mock responds to arguments, and stores a @racket[mock-call]
+ containing the give arguments and the result values of the behavior. The mock's
+ list of calls can be queried with @racket[mock-calls] and erased with
+ @racket[mock-reset!]. The mock's behavior can be temporarily altered using
+ @racket[with-mock-behavior]. If @racket[behavior] is not provided, the mock by
+ default raises an @racket[exn:fail:unexpected-arguments] with a message in terms
+ of @racket[name].
  @mock-examples[
  (define quotient/remainder-mock
    (mock #:behavior quotient/remainder))
@@ -29,59 +30,60 @@
  (define uncallable-mock (mock #:name "uncallable-mock"))
  (eval:error (uncallable-mock 1 2 3 #:foo 'bar #:bar "blah"))]}
 
-@defproc[(mock-reset! [mock mock?]) void?]{
- Removes the history of procedure calls in @racket[mock].
+@defproc[(mock-reset! [m mock?]) void?]{
+ Erases the history of @racket[mock-call] values in @racket[m].
  @mock-examples[
- (define m (mock #:behavior void))
- (m 'foo)
- (mock-num-calls m)
- (mock-reset! m)
- (mock-num-calls m)]}
+ (define void-mock (mock #:behavior void))
+ (void-mock 'foo)
+ (mock-num-calls void-mock)
+ (mock-reset! void-mock)
+ (mock-num-calls void-mock)]}
 
 @defform[(with-mock-behavior ([mock-expr behavior-expr] ...) body ...)
          #:contracts ([mock-expr mock?] [behavior-expr procedure?])]{
  Evaluates each @racket[mock-expr] and @racket[behavior-expr] which must
- be a @racket[mock?] and a @racket[procedure?], then alters the mock's
- behavior in the dynamic extent of @racket[(body ...)] to the given
- procedure. This allows the same mock to behave differently between
- calls, which is useful for testing a procedure defined with
- @racket[define/mock] in different ways for different tests.
+ be a @mock-tech{mock} and a @racket[procedure?] respectively, then alters
+ the mock's @behavior-tech{behavior} in the dynamic extent of
+ @racket[body ...] to the given behavior procedure. This allows the
+ same mock to behave differently between calls, which is useful for
+ testing a procedure defined with @racket[define/mock] in different ways
+ for different tests.
  @mock-examples[
- (define a-mock (mock #:behavior add1))
- (a-mock 10)
- (with-mock-behavior ([a-mock sub1])
-   (a-mock 10))
- (a-mock 10)
- (mock-calls a-mock)]}
+ (define num-mock (mock #:behavior add1))
+ (num-mock 10)
+ (with-mock-behavior ([num-mock sub1])
+   (num-mock 10))
+ (num-mock 10)
+ (mock-calls num-mock)]}
 
 @defstruct*[mock-call ([args arguments?] [results list?]) #:transparent]{
- A structure containg the arguments and result values of a single call
- to a @racket[mock?].}
-
-@defproc[(mock-calls [mock mock?]) (listof mock-call?)]{
- Returns a list of all the @racket[mock-call]s made so far with @racket[mock],
- in order of when they were made.
+ A structure containg the @args-tech{arguments} and result values of a
+ single call to a @mock-tech{mock}.
  @mock-examples[
- (define a-mock (mock #:behavior void))
- (a-mock 10 3)
- (a-mock 'foo 'bar 'baz)
- (mock-calls a-mock)]}
+ (mock-call (arguments 1 2 #:foo 'bar)
+            (list 'value 'another-value))]}
 
-@defproc[(mock-called-with? [mock mock?] [args arguments?])
-         boolean?]{
- Returns @racket[#t] if @racket[mock] has ever been called with @racket[args],
+@defproc[(mock-calls [m mock?]) (listof mock-call?)]{
+ Returns a list of all the calls made so far with @racket[m] in order, as
+ a list of @racket[mock-call?] structs.
+ @mock-examples[
+ (define void-mock (mock #:behavior void))
+ (void-mock 10 3)
+ (void-mock 'foo 'bar 'baz)
+ (mock-calls void-mock)]}
+
+@defproc[(mock-called-with? [m mock?] [args arguments?]) boolean?]{
+ Returns @racket[#t] if @racket[m] has ever been called with @racket[args],
  returns @racket[#f] otherwise.
  @mock-examples[
  (define ~a-mock (mock #:behavior ~a))
  (~a-mock 0 #:width 3 #:align 'left)
  (mock-called-with? ~a-mock (arguments 0 #:align 'left #:width 3))]}
 
-@defproc[(mock-num-calls [mock mock?])
-         exact-nonnegative-integer?]{
- Returns the number of times @racket[mock] has been
- called.
+@defproc[(mock-num-calls [m mock?]) exact-nonnegative-integer?]{
+ Returns the number of times @racket[m] has been called.
  @mock-examples[
- (define a-mock (mock #:behavior void))
- (a-mock 10 3)
- (a-mock 'foo 'bar 'baz)
- (mock-num-calls a-mock)]}
+ (define void-mock (mock #:behavior void))
+ (void-mock 10 3)
+ (void-mock 'foo 'bar 'baz)
+ (mock-num-calls void-mock)]}
