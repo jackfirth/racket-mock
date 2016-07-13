@@ -18,7 +18,7 @@ install:
 
 script:
  - raco test $TRAVIS_BUILD_DIR
- - raco doc-coverage mock
+ - raco doc-coverage mock mock/rackunit
 
 after_success:
  - raco cover -f coveralls -d $TRAVIS_BUILD_DIR/coverage .

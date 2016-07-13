@@ -41,7 +41,7 @@ require
   (apply deftech #:key "arguments struct" pre-flow))
 
 (define (make-mock-eval)
-  (make-base-eval #:lang 'racket/base '(require mock racket/format)))
+  (make-base-eval #:lang 'racket/base '(require mock mock/rackunit racket/format)))
 
 (define-syntax-rule (mock-examples example ...)
    (examples #:eval (make-mock-eval) example ...))
