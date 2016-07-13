@@ -3,9 +3,13 @@
 provide stub
         struct-out exn:fail:not-implemented
 
-require syntax/parse/define
+require racket/function
+        syntax/parse/define
         for-syntax racket/base
                    "util-syntax.rkt"
+
+module+ test
+  require rackunit
 
 (begin-for-syntax
   (define-syntax-class stub-header
@@ -29,3 +33,11 @@ require syntax/parse/define
   (begin header.definition ...))
 
 (struct exn:fail:not-implemented exn:fail () #:transparent)
+
+(module+ test
+  (stub foo (bar v) ((baz k) #:blah v))
+  (check-exn exn:fail:not-implemented? (thunk (foo 1 2 #:a 'b)))
+  (check-exn exn:fail:not-implemented? (thunk (bar 1)))
+  (check-exn exn:fail:contract:arity? (thunk (bar 1 2)))
+  (check-not-exn (thunk (baz 1)))
+  (check-exn exn:fail:not-implemented? (thunk ((baz 1) #:blah "blahhhh"))))
