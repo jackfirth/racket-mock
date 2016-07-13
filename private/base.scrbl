@@ -10,7 +10,7 @@
  (mock? void)]}
 
 @defproc[(mock [#:behavior behavior-proc procedure? #f]
-               [#:name name string? "mock"])
+               [#:name name symbol? 'mock])
          mock?]{
  Returns a @mock-tech{mock} that records arguments its called with and results
  it returns. When called as a procedure, the mock consults its current
@@ -27,7 +27,7 @@
    (mock #:behavior quotient/remainder))
  (quotient/remainder-mock 10 3)
  (mock? quotient/remainder-mock)
- (define uncallable-mock (mock #:name "uncallable-mock"))
+ (define uncallable-mock (mock #:name 'uncallable-mock))
  (eval:error (uncallable-mock 1 2 3 #:foo 'bar #:bar "blah"))]}
 
 @defproc[(mock-reset! [m mock?]) void?]{

@@ -34,8 +34,8 @@ module+ mock-test-setup
              (or (attribute given-submod-id) #'id)
              #:attr mock-value
              (if (attribute given-behavior)
-                 #'(mock #:name (symbol->string 'submod-id) #:behavior given-behavior)
-                 #'(mock #:name (symbol->string 'submod-id)))
+                 #'(mock #:name 'submod-id #:behavior given-behavior)
+                 #'(mock #:name 'submod-id))
              #:attr explicit-form
              #'(id submod-id mock-value)))
   (define-syntax-class explicit-mock-clause
