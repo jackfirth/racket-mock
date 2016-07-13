@@ -16,18 +16,16 @@ Example:
 ```racket
 (require mock)
 
-(define/mock (displayln-twice v)
-  ; in the test submodule, call `void` instead of `displayln`
-  #:mock displayln #:with-behavior void
-  (displayln v)
-  (displayln v))
+(define/mock (foo)
+  ; in test, don't call the real bar
+  #:mock bar #:as bar-mock #:with-behavior (const "wow!")
+  (bar))
 
-(displayln-twice "sent to real displayln") ; prints out twice
-(mock? displayln) ; #f
-(mock-num-calls displayln) ; error - displayln isn't a mock
+(define (bar) "bam!")
+
+(foo) ; "bam!"
 
 (module+ test
-  (displayln-twice "sent to mock displayln") ; doesn't print anything
-  (mock? displayln) ; #t
-  (mock-num-calls displayln)) ; 2
+  (foo) ; "wow!"
+  (check-mock-num-calls 1 bar-mock))
 ```
