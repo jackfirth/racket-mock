@@ -4,3 +4,4 @@ except-in "private/args.rkt"
   make-raise-unexpected-arguments-exn
 "private/base.rkt"
 "private/syntax.rkt"
+"private/stub.rkt"
