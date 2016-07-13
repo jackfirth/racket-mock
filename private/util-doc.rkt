@@ -6,8 +6,10 @@ provide
   define-args-tech
   define-behavior-tech
   define-mock-tech
+  define-stub-tech
   mock-examples
   mock-tech
+  stub-tech
   for-label
     all-from-out mock
                  racket/base
@@ -17,28 +19,24 @@ provide
 require
   scribble/example
   scribble/manual
+  syntax/parse/define
   for-label mock
             racket/base
             racket/contract
             rackunit
 
-(define (mock-tech . pre-flow)
-  (apply tech #:key "mock" pre-flow))
+(define-simple-macro (define-techs [key:str use-id:id def-id:id] ...)
+  (begin
+    (begin
+      (define (def-id . pre-flow) (apply deftech #:key key pre-flow))
+      (define (use-id . pre-flow) (apply tech #:key key pre-flow)))
+    ...))
 
-(define (behavior-tech . pre-flow)
-  (apply tech #:key "behavior" pre-flow))
-
-(define (args-tech . pre-flow)
-  (apply tech #:key "arguments struct" pre-flow))
-
-(define (define-mock-tech . pre-flow)
-  (apply deftech #:key "mock" pre-flow))
-
-(define (define-behavior-tech . pre-flow)
-  (apply deftech #:key "behavior" pre-flow))
-
-(define (define-args-tech . pre-flow)
-  (apply deftech #:key "arguments struct" pre-flow))
+(define-techs
+  ["mock" mock-tech define-mock-tech]
+  ["behavior" behavior-tech define-behavior-tech]
+  ["arguments struct" args-tech define-args-tech]
+  ["stub" stub-tech define-stub-tech])
 
 (define (make-mock-eval)
   (make-base-eval #:lang 'racket/base '(require mock mock/rackunit racket/format)))
