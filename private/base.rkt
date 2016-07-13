@@ -6,7 +6,7 @@ provide
   with-mock-behavior
   contract-out
     mock? predicate/c
-    mock (->* () (#:name string? #:behavior procedure?) mock?)
+    mock (->* () (#:name symbol? #:behavior procedure?) mock?)
     mock-reset! (-> mock? void?)
     mock-calls (-> mock? (listof mock-call?))
     struct mock-call ([args arguments?] [results list?])
@@ -51,7 +51,7 @@ module+ test
 (define (add-call! calls-box call)
   (box-transform! calls-box (append _ (list call))))
 
-(define (mock #:behavior [given-behavior #f] #:name [name "mock"])
+(define (mock #:behavior [given-behavior #f] #:name [name 'mock])
   (define behavior
     (or given-behavior (make-raise-unexpected-arguments-exn name)))
   (make-mock (make-parameter behavior) (box '())))
