@@ -16,4 +16,5 @@
     "racket-doc"))
 (define test-omit-paths
   '(#rx"\\.scrbl$"
-    #rx"info\\.rkt$"))
+    #rx"info\\.rkt$"
+    #rx"util-doc\\.rkt$"))
