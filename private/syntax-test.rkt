@@ -61,6 +61,7 @@ require racket/function
     #:mock foo #:as foo-mock #:with-behavior (const "fake")
     (foo))
   (with-mocks bar-explicit
+    (check-not-exn bar-explicit)
     (check-pred not-mock? foo)
     (check-pred mock? foo-mock)))
 
