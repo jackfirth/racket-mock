@@ -6,7 +6,7 @@ provide stub
 require racket/function
         syntax/parse/define
         for-syntax racket/base
-                   "util-syntax.rkt"
+                   "syntax-class.rkt"
 
 module+ test
   require rackunit

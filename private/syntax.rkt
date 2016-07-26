@@ -1,13 +1,17 @@
 #lang sweet-exp racket/base
 
+provide define/mock
+        with-mocks
+
 require racket/splicing
         syntax/parse/define
         "base.rkt"
+        "opaque.rkt"
         for-syntax racket/base
+                   racket/match
+                   racket/syntax
                    syntax/parse
-                   "util-syntax.rkt"
-
-provide define/mock
+                   "syntax-class.rkt"
 
 module+ mock-test-setup
   require rackunit
@@ -15,70 +19,41 @@ module+ mock-test-setup
           "check.rkt"
 
 (begin-for-syntax
-  (define-splicing-syntax-class submod-clause
-    (pattern (~seq #:in-submod id:id)))
-  (define-splicing-syntax-class mock-clause
-    (pattern (~seq #:mock id:id
-                   (~optional (~seq #:as given-submod-id:id))
-                   (~optional (~seq #:with-behavior given-behavior:expr)))
-             #:attr submod-id
-             (or (attribute given-submod-id) #'id)
-             #:attr mock-value
-             (if (attribute given-behavior)
-                 #'(mock #:name 'submod-id #:behavior given-behavior)
-                 #'(mock #:name 'submod-id))
-             #:attr explicit-form
-             #'(id submod-id mock-value)))
-  (define-syntax-class explicit-mock-clause
-    (pattern (id:id submod-id:id mock-value:expr))))
+  (struct static-val-transformer (id value)
+    #:property prop:rename-transformer (struct-field-index id))
+  (define (static-val static-trans-stx)
+    (define-values (trans _)
+      (syntax-local-value/immediate static-trans-stx))
+    (static-val-transformer-value trans))
+  (struct mocks-syntax-info (proc-id mocks) #:transparent))
+
+(define-simple-macro (define-static id base-id static-expr)
+  (define-syntax id (static-val-transformer #'base-id static-expr)))
+
+(define (mock-reset-all! . mocks)
+  (for-each mock-reset! mocks))
 
 (define-simple-macro
-  (define/mock-explicit header:definition-header
-    submod:submod-clause
-    #:mocks (mock-clause:explicit-mock-clause ...)
-    body ...+)
+  (define/mock header:definition-header
+    mocks:mocks-clause
+    body:expr ...+)
   (begin
-    (define-syntax-parser inject
-      [(inject id:id mock-clause.id ...)
-       (with-syntax ([header (replace-header-id #'header #'id)])
-         #'(define header body ...))])
-    (inject header.id mock-clause.id ...)
-    (module+ submod.id
-      (define mock-clause.submod-id mock-clause.mock-value) ...
-      (inject header.id mock-clause.submod-id ...))))
+    (define header.fresh body ...)
+    mocks.definitions
+    (splicing-let mocks.bindings
+      (define header.fresh-secondary body ...))
+    (define-static header.id header.fresh-id
+      (mocks-syntax-info #'header.fresh-id-secondary mocks.static-info))))
 
-(define-syntax-parser define/mock
-  [(_ header:definition-header
-      (~optional submod:submod-clause)
-      mock:mock-clause ...
-      body ...+)
-   (with-syntax ([submod-id (or (attribute submod.id)
-                                (syntax/loc #'header test))])
-     #'(define/mock-explicit header
-         #:in-submod submod-id
-         #:mocks (mock.explicit-form ...)
-         body ...))])
-
-(module+ mock-test-setup
-  (define not-mock? (compose not mock?))
-  
-  (define/mock (bar v)
-    #:in-submod mock-test
-    #:mock foo #:as foo-mock #:with-behavior void
-    (foo v)
-    (foo v))
-  
-  (define (foo v)
-    (displayln v))
-  
-  (check-pred not-mock? foo)
-  
-  (module+ mock-test
-    (check-pred not-mock? foo)
-    (check-pred mock? foo-mock)
-    (bar 20)
-    (check-mock-called-with? foo-mock (arguments 20))
-    (check-mock-num-calls 2 foo-mock)))
-
-(module+ test
-  (require (submod ".." mock-test-setup mock-test)))
+(define-syntax-parser with-mocks
+  [(_ proc:id body:expr ...)
+   (match-define (mocks-syntax-info proc/mocks-id mocks) (static-val #'proc))
+   (define mock-bindings
+     (map (match-lambda [(mock-static-info mock-id mock-impl-id)
+                         (list (syntax-local-introduce mock-id) mock-impl-id)])
+          mocks))
+   (with-syntax* ([(binding ...) mock-bindings]
+                  [([mock-id mock-impl-id] ...) #'(binding ...)])
+     #`(let ([proc #,proc/mocks-id] binding ...)
+         body ...
+         (mock-reset-all! mock-id ...)))])
