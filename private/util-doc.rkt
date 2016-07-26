@@ -39,7 +39,8 @@ require
   ["stub" stub-tech define-stub-tech])
 
 (define (make-mock-eval)
-  (make-base-eval #:lang 'racket/base '(require mock mock/rackunit racket/format)))
+  (make-base-eval #:lang 'racket/base
+                  '(require mock mock/rackunit racket/format racket/function)))
 
 (define-syntax-rule (mock-examples example ...)
    (examples #:eval (make-mock-eval) example ...))

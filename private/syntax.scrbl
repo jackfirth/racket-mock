@@ -10,35 +10,35 @@ of testing, and once using real functions to provide actual functionality. The
 at once.
 
 @defform[#:id define/mock
-         (define/mock header submod-clause mock-clause ... body ...)
+         (define/mock header mock-clause ... body ...)
          #:grammar ([header id (header arg ...) (header arg ... . rest)]
-                    [submod-clause (code:line)
-                     (code:line #:in-submod submod-id)]
                     [mock-clause (code:line #:mock mock-id mock-as mock-default)]
-                    [mock-as (code:line)
-                     (code:line #:as mock-as-id)]
-                    [mock-default (code:line)
-                     (code:line #:with-behavior behavior-expr)])
+                    [mock-as (code:line) (code:line #:as mock-as-id)]
+                    [mock-default (code:line) (code:line #:with-behavior behavior-expr)])
          #:contracts ([behavior-expr procedure?])]{
- Like @racket[define], except in @racket[submod-id] which defaults to @racket[test].
- In that submodule, a different implementation is defined which uses @mock-tech{mocks}
- for each @racket[mock-id]. Each mock uses @racket[beavhior-expr] as its
+ Like @racket[define] except two versions of @racket[id] are defined, a normal definition
+ and a definition where each @racket[mock-id] is defined as a @mock-tech{mock} within
+ @racket[body ...]. This alternate definition is used whenever @racket[id] is called within
+ a @racket[(with-mocks id ...)] form. Each mock uses @racket[beavhior-expr] as its
  @behavior-tech{behavior} if provided, and is bound to @racket[mock-as-id] or
- @racket[mock-id] in the mocking submodule. This allows code in the mocking submodule
- to use the mocks with testing procedures such as @racket[check-mock-called-with?].
- This form can only be used at the module level, as its expansion produces code in a
- submodule.
+ @racket[mock-id] within @racket[(with-mocks id ...)] for use with checks like
+ @racket[check-mock-called-with?]. The @racket[id] is bound as a rename transformer with
+ @racket[define-syntax], but also includes information used by @racket[with-mocks] to bind
+ @racket[id] and each @racket[mock-id] or @racket[mock-as-id].
  @mock-examples[
- (module m racket
-   (require mock)
-   (define/mock (foo)
-     #:in-submod foo-test
-     #:mock bar #:as bar-mock #:with-behavior (const "wow!")
-     (bar))
-   (define (bar) "bam!")
-   (foo)
-   (module+ foo-test
-     (foo)
-     (mock-calls bar-mock)))
- (require 'm)
- (require (submod 'm foo-test))]}
+ (define/mock (foo)
+   #:mock bar #:as bar-mock #:with-behavior (const "wow!")
+   (bar))
+ (define (bar) "bam!")
+ (displayln (foo))
+ (with-mocks foo
+   (displayln (foo))
+   (displayln (mock-calls bar-mock)))]}
+
+@defform[(with-mocks proc/mocks-id body ...)]{
+ Looks up static mocking information associated with @racket[proc/mocks-id], which must
+ have been defined with @racket[define/mock], and binds a few identifiers within @racket[body ...].
+ The identifier @racket[proc/mocks-id] is bound to a separate implementation that calls
+ @mock-tech{mocks}, and any mocked procedures defined by @racket[proc/mocks-id] are bound
+ to their mocks. See @racket[define/mock] for details and an example. The @racket[body ...]
+ forms are in a new internal definition context surrounded in an enclosing @racket[let].}
