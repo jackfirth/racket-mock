@@ -2,6 +2,7 @@
 
 require racket/function
         rackunit
+        "args.rkt"
         "base.rkt"
         "check.rkt"
         "syntax.rkt"
@@ -55,11 +56,25 @@ require racket/function
       (check-equal? (bar-local) "fake")
       (check-pred mock? foo))))
 
-(define/mock (bar-explicit)
-  #:mock foo #:as foo-mock #:with-behavior (const "fake")
-  (foo))
-
 (test-case "Should use given binding instead of mocked procedure id"
+  (define/mock (bar-explicit)
+    #:mock foo #:as foo-mock #:with-behavior (const "fake")
+    (foo))
   (with-mocks bar-explicit
     (check-pred not-mock? foo)
     (check-pred mock? foo-mock)))
+
+(test-case "Should use default mock behavior (throwing) when behavior unspecified"
+  (define/mock (bar-default-behavior)
+    #:mock foo
+    (foo))
+  (with-mocks bar-default-behavior
+    (check-exn exn:fail:unexpected-arguments? bar-default-behavior)))
+
+(test-case "Should allow positional, keyword, and rest arguments"
+  (define/mock (bar-args arg #:keyword kwarg . rest)
+    #:mock foo #:with-behavior (const "fake")
+    (foo))
+  (check-equal? (bar-args #f #:keyword 'foo 1 2 3) "real")
+  (with-mocks bar-args
+    (check-equal? (bar-args #f #:keyword 'foo 1 2 3) "fake")))
