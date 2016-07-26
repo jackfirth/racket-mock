@@ -12,6 +12,7 @@ provide
   stub-tech
   for-label
     all-from-out mock
+                 mock/rackunit
                  racket/base
                  racket/contract
                  rackunit
@@ -21,6 +22,7 @@ require
   scribble/manual
   syntax/parse/define
   for-label mock
+            mock/rackunit
             racket/base
             racket/contract
             rackunit
