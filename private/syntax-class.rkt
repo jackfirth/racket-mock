@@ -2,9 +2,13 @@
 
 provide definition-header
         mocks-clause
+        opaque-clause
         struct-out mock-static-info
+        struct-out mocks-syntax-info
 
 require racket/syntax
+        syntax/stx
+        "syntax-util.rkt"
         for-template racket/base
                      "opaque.rkt"
                      "base.rkt"
@@ -12,6 +16,7 @@ require racket/syntax
 require syntax/parse
 
 (struct mock-static-info (id bound-id) #:transparent)
+(struct mocks-syntax-info (proc-id opaques mocks) #:transparent)
 
 (define-syntax-class definition-header
   (pattern (~or root-id:id
@@ -57,3 +62,28 @@ require syntax/parse
            #:attr definitions #'(begin clause.definition ...)
            #:attr bindings #'(clause.binding ...)
            #:attr static-info #'(list clause.static-info ...)))
+
+(define-splicing-syntax-class opaque-clause
+  #:attributes (definitions bindings static-info)
+  (pattern (~seq)
+           #:attr definitions #'(begin)
+           #:attr bindings #'()
+           #:attr static-info #'(list))
+  (pattern (~seq #:opaque id:id)
+           #:with id? (predicate-id #'id)
+           #:with fresh-id (generate-temporary #'id)
+           #:with fresh-id? (predicate-id #'fresh-id)
+           #:attr definitions #'(define-opaque fresh-id #:name id)
+           #:attr bindings #'([id fresh-id] [id? fresh-id?])
+           #:attr static-info #'(list (mock-static-info #'id #'fresh-id)
+                                      (mock-static-info #'id? #'fresh-id?)))
+  (pattern (~seq #:opaque (id:id ...))
+           #:with (id? ...) (stx-map predicate-id #'(id ...))
+           #:with (fresh-id ...) (generate-temporaries #'(id ...))
+           #:with (fresh-id? ...) (stx-map predicate-id #'(fresh-id ...))
+           #:attr definitions #'(begin (define-opaque fresh-id #:name id) ...)
+           #:attr bindings #'([id fresh-id] ... [id? fresh-id?] ...)
+           #:attr static-info
+           #'(map mock-static-info
+                  (syntax->list #'(id ... id? ...))
+                  (syntax->list #'(fresh-id ... fresh-id? ...)))))

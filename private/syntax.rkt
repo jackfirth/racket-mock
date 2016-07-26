@@ -24,8 +24,7 @@ module+ mock-test-setup
   (define (static-val static-trans-stx)
     (define-values (trans _)
       (syntax-local-value/immediate static-trans-stx))
-    (static-val-transformer-value trans))
-  (struct mocks-syntax-info (proc-id mocks) #:transparent))
+    (static-val-transformer-value trans)))
 
 (define-simple-macro (define-static id base-id static-expr)
   (define-syntax id (static-val-transformer #'base-id static-expr)))
@@ -35,25 +34,31 @@ module+ mock-test-setup
 
 (define-simple-macro
   (define/mock header:definition-header
+    opaque:opaque-clause
     mocks:mocks-clause
     body:expr ...+)
   (begin
     (define header.fresh body ...)
-    mocks.definitions
+    opaque.definitions
+    (splicing-let opaque.bindings
+      mocks.definitions)
     (splicing-let mocks.bindings
       (define header.fresh-secondary body ...))
     (define-static header.id header.fresh-id
-      (mocks-syntax-info #'header.fresh-id-secondary mocks.static-info))))
+      (mocks-syntax-info #'header.fresh-id-secondary opaque.static-info mocks.static-info))))
+
+(begin-for-syntax
+  (define (mock-bindings mock-static-infos)
+    (map (match-lambda [(mock-static-info mock-id mock-impl-id)
+                        (list (syntax-local-introduce mock-id) mock-impl-id)])
+         mock-static-infos)))
 
 (define-syntax-parser with-mocks
   [(_ proc:id body:expr ...)
-   (match-define (mocks-syntax-info proc/mocks-id mocks) (static-val #'proc))
-   (define mock-bindings
-     (map (match-lambda [(mock-static-info mock-id mock-impl-id)
-                         (list (syntax-local-introduce mock-id) mock-impl-id)])
-          mocks))
-   (with-syntax* ([(binding ...) mock-bindings]
-                  [([mock-id mock-impl-id] ...) #'(binding ...)])
-     #`(let ([proc #,proc/mocks-id] binding ...)
+   (match-define (mocks-syntax-info proc-id opaques mocks) (static-val #'proc))
+   (with-syntax* ([(opaque-binding ...) (mock-bindings opaques)]
+                  [(mock-binding ...) (mock-bindings mocks)]
+                  [([mock-id mock-impl-id] ...) #'(mock-binding ...)])
+     #`(let ([proc #,proc-id] opaque-binding ... mock-binding ...)
          body ...
          (mock-reset-all! mock-id ...)))])
