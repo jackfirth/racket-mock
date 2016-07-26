@@ -14,7 +14,7 @@ Currently unstable, API changes may occur.
 Example:
 
 ```racket
-(require mock)
+(require mock mock/rackunit)
 
 (define/mock (foo)
   ; in test, don't call the real bar
@@ -25,7 +25,7 @@ Example:
 
 (foo) ; "bam!"
 
-(module+ test
+(with-mocks foo
   (foo) ; "wow!"
   (check-mock-num-calls 1 bar-mock))
 ```
