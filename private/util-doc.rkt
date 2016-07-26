@@ -6,9 +6,11 @@ provide
   define-args-tech
   define-behavior-tech
   define-mock-tech
+  define-opaque-tech
   define-stub-tech
   mock-examples
   mock-tech
+  opaque-tech
   stub-tech
   for-label
     all-from-out mock
@@ -35,9 +37,10 @@ require
     ...))
 
 (define-techs
-  ["mock" mock-tech define-mock-tech]
-  ["behavior" behavior-tech define-behavior-tech]
   ["arguments struct" args-tech define-args-tech]
+  ["behavior" behavior-tech define-behavior-tech]
+  ["mock" mock-tech define-mock-tech]
+  ["opaque" opaque-tech define-opaque-tech]
   ["stub" stub-tech define-stub-tech])
 
 (define (make-mock-eval)
