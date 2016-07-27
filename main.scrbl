@@ -2,7 +2,7 @@
 @(require "private/util-doc.rkt")
 
 @title{Mocks}
-@defmodule[mock]
+@defmodule[mock #:packages ("jack-mock")]
 @author[@author+email["Jack Firth" "jackhfirth@gmail.com"]]
 
 This library includes functions and forms for working with
@@ -19,5 +19,6 @@ source code: @url["https://github.com/jackfirth/racket-mock"]
 @include-section["private/base.scrbl"]
 @include-section["private/args.scrbl"]
 @include-section["private/check.scrbl"]
+@include-section["private/opaque.scrbl"]
 @include-section["private/syntax.scrbl"]
 @include-section["private/stub.scrbl"]

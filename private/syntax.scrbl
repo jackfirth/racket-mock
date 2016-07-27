@@ -1,7 +1,7 @@
 #lang scribble/manual
 @(require "util-doc.rkt")
 
-@title{Mocking Out Functions for Testing}
+@title{Mocking Dependencies}
 
 @mock-tech{Mocks} by themselves provide useful low-level building blocks, but often
 to use them a function needs to be implemented twice - once using mocks for the purpose
@@ -10,8 +10,11 @@ of testing, and once using real functions to provide actual functionality. The
 at once.
 
 @defform[#:id define/mock
-         (define/mock header mock-clause ... body ...)
+         (define/mock header opaque-clause mock-clause ... body ...)
          #:grammar ([header id (header arg ...) (header arg ... . rest)]
+                    [opaque-clause (code:line)
+                                   (code:line #:opaque opaque-id:id)
+                                   (code:line #:opaque (opaque-id:id ...))]
                     [mock-clause (code:line #:mock mock-id mock-as mock-default)]
                     [mock-as (code:line) (code:line #:as mock-as-id)]
                     [mock-default (code:line) (code:line #:with-behavior behavior-expr)])
@@ -22,9 +25,11 @@ at once.
  a @racket[(with-mocks id ...)] form. Each mock uses @racket[beavhior-expr] as its
  @behavior-tech{behavior} if provided, and is bound to @racket[mock-as-id] or
  @racket[mock-id] within @racket[(with-mocks id ...)] for use with checks like
- @racket[check-mock-called-with?]. The @racket[id] is bound as a rename transformer with
+ @racket[check-mock-called-with?]. Each @racket[opaque-id] is defined as an
+ @opaque-tech{opaque-value} using @racket[define-opaque], and each @racket[behavior-expr]
+ may refer to any @racket[opaque-id]. The @racket[id] is bound as a rename transformer with
  @racket[define-syntax], but also includes information used by @racket[with-mocks] to bind
- @racket[id] and each @racket[mock-id] or @racket[mock-as-id].
+ @racket[id], each @racket[mock-id] or @racket[mock-as-id], and each @racket[opaque-id].
  @mock-examples[
  (define/mock (foo)
    #:mock bar #:as bar-mock #:with-behavior (const "wow!")
@@ -33,7 +38,50 @@ at once.
  (displayln (foo))
  (with-mocks foo
    (displayln (foo))
-   (displayln (mock-calls bar-mock)))]}
+   (displayln (mock-calls bar-mock)))]
+ 
+ Opaque values are bound and available in both @racket[with-mocks] forms and mock
+ behavior expressions, and can be used to represent difficult to construct values like
+ database connections.
+ @mock-examples[
+ (define/mock (foo/opaque)
+   #:opaque special
+   #:mock bar #:as bar-mock #:with-behavior (const special)
+   (bar))
+ (define (bar) "bam!")
+ (eval:error special)
+ (foo/opaque)
+ (with-mocks foo/opaque
+   (displayln special)
+   (displayln (special? (foo/opaque))))]
+ 
+ If @racket[#:as mock-as] is not provided, @racket[mock-id] is used instead. This means
+ @racket[with-mocks] forms cannot reference both the mock and the mocked dependency
+ simultaneously.
+ @mock-examples[
+ (define/mock (foo/default-binding)
+   #:mock bar #:with-behavior (const "wow!")
+   (bar))
+ (define (bar) "bam!")
+ (foo/default-binding)
+ (with-mocks foo/default-binding
+   (displayln (foo/default-binding))
+   ;; no way to refer to real bar in here
+   (displayln (mock-calls bar)))]
+ 
+ If @racket[#:with-behavior behavior-expr] is not provided, the default behavior of
+ @racket[mock] is used. If a @racket[with-mocks] form expects the mock to be called,
+ @racket[with-mock-behavior] must also be used within the @racket[with-mocks] form to
+ setup the correct mock behavior.
+ @mock-examples[
+ (define/mock (foo/no-behavior)
+   #:mock bar
+   (bar))
+ (define (bar) "bam!")
+ (foo/no-behavior)
+ (eval:error
+  (with-mocks foo/no-behavior
+    (foo/no-behavior)))]}
 
 @defform[(with-mocks proc/mocks-id body ...)]{
  Looks up static mocking information associated with @racket[proc/mocks-id], which must
@@ -41,4 +89,4 @@ at once.
  The identifier @racket[proc/mocks-id] is bound to a separate implementation that calls
  @mock-tech{mocks}, and any mocked procedures defined by @racket[proc/mocks-id] are bound
  to their mocks. See @racket[define/mock] for details and an example. The @racket[body ...]
- forms are in a new internal definition context surrounded in an enclosing @racket[let].}
+ forms are in a new internal definition context surrounded by an enclosing @racket[let].}

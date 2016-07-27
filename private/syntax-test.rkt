@@ -79,3 +79,24 @@ require racket/function
   (check-equal? (bar-args #f #:keyword 'foo 1 2 3) "real")
   (with-mocks bar-args
     (check-equal? (bar-args #f #:keyword 'foo 1 2 3) "fake")))
+
+(test-case "Should define opaque value and make it available in mock behaviors"
+  (define/mock (bar-opaque)
+    #:opaque foo-result
+    #:mock foo #:with-behavior (const foo-result)
+    (foo))
+  (check-equal? (bar-opaque) "real")
+  (with-mocks bar-opaque
+    (check-pred foo-result? foo-result)
+    (check-equal? (bar-opaque) foo-result)))
+
+(test-case "Should work with multiple opaque values"
+  (define/mock (bar-opaque-multi)
+    #:opaque (left right)
+    #:mock foo #:with-behavior (const (cons left right))
+    (foo))
+  (check-equal? (bar-opaque-multi) "real")
+  (with-mocks bar-opaque-multi
+    (check-pred left? left)
+    (check-pred right? right)
+    (check-equal? (bar-opaque-multi) (cons left right))))

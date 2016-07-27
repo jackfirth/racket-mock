@@ -1,7 +1,7 @@
 #lang scribble/manual
 @(require "util-doc.rkt")
 
-@title{Arguments structure}
+@title{Arguments Structures}
 @mock-tech{Mocks} record procedure calls partly via an @define-args-tech{arguments structure},
 a value containing a set of positional and keyword argument values. Various utility procedures
 for constructing and manipulating these structures are provided by @racketmodname[mock].
