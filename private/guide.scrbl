@@ -100,7 +100,8 @@ mocks.
 @mock-deps-examples[
  (define file-mock (mock #:behavior (const "green")))
  (define displayln-mock (mock #:behavior void))
- (print-favorite-color-message #:read-with file-mock #:print-with displayln-mock)
+ (print-favorite-color-message #:read-with file-mock
+                               #:print-with displayln-mock)
  (mock-calls file-mock)
  (mock-calls displayln-mock)]
 
@@ -108,3 +109,117 @@ By using @racket[const] we're able to easily setup tests that exercise a
 particular codepath. We can test side effectful code! There's still more to
 discuss, the following sections discuss adjusting mock behavior and automatically
 mocking out dependencies.
+
+@section{Dynamically Changing Mock Behavior}
+@define-persistent-mock-examples[mock-behavior-examples]
+
+Mocks have a @italic{behavior}, which defines what they return when called. This
+behavior is not fixed - mocks can have their behavior changed dynamically using
+@racket[with-behavior]. This allows the same mock to respond differently to different
+calls while retaining a history of all calls. Recall the favorite color procedure we
+defined in the previous section.
+
+@mock-behavior-examples[
+ (define (print-favorite-color-message #:read-with [file->string file->string]
+                                       #:print-with [displayln displayln])
+   (define color (file->string "color-preference.txt"))
+   (define message
+     (case color
+       [("blue") "Your favorite color is blue. Like the ocean!"]
+       [("red") "Your favorite color is red. Fiery, fiery red!"]
+       [("green") "Your favorite color is green. I love forests!"]
+       [else "I haven't got much to say about your favorite color."]))
+   (displayln message))]
+
+If we want to test more than one branch of this code, we need our @racket[file->string]
+mock to return different results. We could use different mocks, but then each mock has
+a separate call history. In this particular case that's not a problem, but for the sake
+of a good example we'll assume we want a combined history. We can use
+@racket[with-mock-behavior] to dynmaically control the behavior of a mock.
+
+@mock-behavior-examples[
+ (define file-mock (mock #:behavior (const "green")))
+ (define displayln-mock (mock #:behavior void))
+ (print-favorite-color-message #:read-with file-mock
+                               #:print-with displayln-mock)
+ (with-mock-behavior ([file-mock (const "blue")])
+   (print-favorite-color-message #:read-with file-mock
+                                 #:print-with displayln-mock))
+ (mock-calls displayln-mock)]
+
+A mocks behavior is a @racket[parameter] under the hood, so @racket[with-mock-behavior]
+acts similarly to @racket[parameterize]. While here we could have made a second mock,
+in the next section we'll introduce automatic mocking which defines one mock per
+dependency for us.
+
+@section{Automatic Mocking with Syntax}
+@define-persistent-mock-examples[mock-syntax-examples]
+
+In the previous sections we transformed procedures we wanted to test into higher order
+functions that accepted their dependencies as input. This let us construct a mock for
+each dependency and pass it in to inspect how the procedure called its dependencies.
+This was a fairly mechanical translation. In this section we introduce @racket[define/mock],
+a syntactic form that automates mocking out dependencies in this fashion. Recall again our
+favorite color procedure.
+
+@mock-examples[
+ (define (print-favorite-color-message)
+   (define color (file->string "color-preference.txt"))
+   (define message
+     (case color
+       [("blue") "Your favorite color is blue. Like the ocean!"]
+       [("red") "Your favorite color is red. Fiery, fiery red!"]
+       [("green") "Your favorite color is green. I love forests!"]
+       [else "I haven't got much to say about your favorite color."]))
+   (displayln message))]
+
+We previously mocked out the @racket[file->string] and @racket[displayln] procedures.
+This was done in three steps:
+
+@itemlist[
+ @item{Add a parameter for each dependency procedure that defaults to the real one.}
+ @item{Define a mock for each dependency procedure with appropriate behavior}
+ @item{Call @racket[print-favorite-color-message] with the mocks as its dependencies,
+  adjusting mock behavior and resetting mocks as necessary.}]
+
+The @racket[define/mock] form automates the first two steps of this process.
+
+@mock-syntax-examples[
+ (define/mock (print-favorite-color-message)
+   #:mock file->string #:as file-mock #:with-behavior (const "blue")
+   #:mock displayln #:as display-mock #:with-behavior void
+   (define color (file->string "color-preference.txt"))
+   (define message
+     (case color
+       [("blue") "Your favorite color is blue. Like the ocean!"]
+       [("red") "Your favorite color is red. Fiery, fiery red!"]
+       [("green") "Your favorite color is green. I love forests!"]
+       [else "I haven't got much to say about your favorite color."]))
+   (displayln message))]
+
+The details of how this works are covered in @secref{mock-reference}, but the gist is
+that each @racket[#:mock] clause mocks out a single dependency procedure and defines a
+mock with the name given in the @racket[#:as] clause. The @racket[#:with-behavior] clause
+defines the default behavior for each mock. However, the mocks are not immediately
+available to client code - their definitions must be brought into scope using a
+@racket[with-mocks] form.
+
+@mock-syntax-examples[
+ (eval:error file-mock)
+ (eval:error (print-favorite-color-message))
+ (with-mocks print-favorite-color-message
+   (print-favorite-color-message)
+   (println (mock-calls display-mock)))]
+
+The @racket[with-mocks] form also takes care of calling @racket[mock-reset!] on every
+mock associated with @racket[print-favorite-color-message].
+
+@mock-syntax-examples[
+ (with-mocks print-favorite-color-message
+   (print-favorite-color-message)
+   (println (mock-num-calls display-mock)))
+ (with-mocks print-favorite-color-message
+   (println (mock-num-calls display-mock)))]
+
+This makes setting up mocked dependencies much simpler. The @racket[define/mock] form
+has a few other options to control its behavior, see @secref{mock-reference} for details.
