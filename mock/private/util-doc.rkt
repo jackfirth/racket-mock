@@ -15,30 +15,29 @@ provide
   stub-tech
   for-label
     all-from-out mock
-                 mock/rackunit
                  racket/base
                  racket/contract
                  racket/file
                  racket/function
-                 rackunit
 
 require
   scribble/example
   scribble/manual
   syntax/parse/define
   for-label mock
-            mock/rackunit
             racket/base
             racket/contract
             racket/file
             racket/function
-            rackunit
+
+(define mock-doc
+  '(lib "mock/main.scrbl"))
 
 (define-simple-macro (define-techs [key:str use-id:id def-id:id] ...)
   (begin
     (begin
       (define (def-id . pre-flow) (apply deftech #:key key pre-flow))
-      (define (use-id . pre-flow) (apply tech #:key key pre-flow)))
+      (define (use-id . pre-flow) (apply tech #:key key #:doc mock-doc pre-flow)))
     ...))
 
 (define-techs
@@ -50,7 +49,7 @@ require
 
 (define (make-mock-eval)
   (make-base-eval #:lang 'racket/base
-                  '(require mock mock/rackunit racket/format racket/function racket/file)))
+                  '(require mock racket/format racket/function racket/file)))
 
 (define-syntax-rule (mock-examples example ...)
    (examples #:eval (make-mock-eval) example ...))

@@ -1,12 +1,10 @@
 #lang sweet-exp racket/base
 
-require racket/contract
-        rackunit
-        "args.rkt"
-        "base.rkt"
-
 provide check-mock-called-with?
         check-mock-num-calls
+
+require rackunit
+        mock
 
 (define no-calls-made-message "No calls were made matching the expected arguments")
 
@@ -23,3 +21,13 @@ provide check-mock-called-with?
 
 (define-simple-check (check-mock-num-calls mock expected-num-calls)
   (equal? (mock-num-calls mock) expected-num-calls))
+
+(module+ test
+  (test-case "Should check if a mock's been called a certain number of times"
+    (define m (mock #:behavior void))
+    (check-mock-num-calls m 0)
+    (m 1 2 3)
+    (check-mock-num-calls m 1)
+    (m 'foo)
+    (m 'bar)
+    (check-mock-num-calls m 3)))

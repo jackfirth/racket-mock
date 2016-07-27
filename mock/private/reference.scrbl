@@ -9,7 +9,6 @@ For a gentler introduction and use cases, see @secref{mock-guide}.
 
 @include-section["base.scrbl"]
 @include-section["args.scrbl"]
-@include-section["check.scrbl"]
 @include-section["opaque.scrbl"]
 @include-section["syntax.scrbl"]
 @include-section["stub.scrbl"]

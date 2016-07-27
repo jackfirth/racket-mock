@@ -16,7 +16,6 @@ require racket/splicing
 module+ mock-test-setup
   require rackunit
           "args.rkt"
-          "check.rkt"
 
 (begin-for-syntax
   (struct static-val-transformer (id value)
