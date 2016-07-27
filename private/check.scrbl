@@ -1,7 +1,7 @@
 #lang scribble/manual
 @(require "util-doc.rkt")
 
-@title{RackUnit Checks for Mocks}
+@title{Mock RackUnit Checks}
 @defmodule[mock/rackunit #:packages ("jack-mock")]
 
 @defproc[(check-mock-called-with? [m mock?] [args arguments])

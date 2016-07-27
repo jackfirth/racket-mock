@@ -1,7 +1,7 @@
 #lang scribble/manual
 @(require "util-doc.rkt")
 
-@title{Basic Mock Construction}
+@title{Core Mock API}
 
 @defproc[(mock? [v any/c]) boolean?]{
  Predicate identifying @mock-tech{mocks}.

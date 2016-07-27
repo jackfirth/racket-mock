@@ -1,7 +1,7 @@
 #lang scribble/manual
 @(require "util-doc.rkt")
 
-@title{Mocking Out Functions for Testing}
+@title{Mocking Dependencies}
 
 @mock-tech{Mocks} by themselves provide useful low-level building blocks, but often
 to use them a function needs to be implemented twice - once using mocks for the purpose

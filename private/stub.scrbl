@@ -1,7 +1,7 @@
 #lang scribble/manual
 @(require "util-doc.rkt")
 
-@title{Writing Stub Implementations}
+@title{Stub Implementations}
 @mock-tech{Mocks} and @racket[define/mock] make it possible to test procedures
 before the procedures they call have been implemented. However, if the procedures
 called haven't been defined, a compilation error will occur despite the fact
