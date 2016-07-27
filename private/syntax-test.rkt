@@ -22,11 +22,11 @@ require racket/function
 
 (test-case "Should reset mocks after with-mocks scope"
   (with-mocks bar
-    (check-mock-num-calls 0 foo)
+    (check-mock-num-calls foo 0)
     (bar)
-    (check-mock-num-calls 1 foo))
+    (check-mock-num-calls foo 1))
   (with-mocks bar
-    (check-mock-num-calls 0 foo)))
+    (check-mock-num-calls foo 0)))
 
 (with-mocks bar
   (test-equal? "Should use mock implementation in with-mocks"
