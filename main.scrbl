@@ -2,7 +2,7 @@
 @(require "private/util-doc.rkt")
 
 @title{Mocks}
-@defmodule[mock]
+@defmodule[mock #:packages ("jack-mock")]
 @author[@author+email["Jack Firth" "jackhfirth@gmail.com"]]
 
 This library includes functions and forms for working with
