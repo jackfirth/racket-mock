@@ -6,6 +6,7 @@ env:
   matrix:
     - RACKET_VERSION=6.4
     - RACKET_VERSION=6.5
+    - RACKET_VERSION=6.6
 
 before_install:
   - git clone https://github.com/greghendershott/travis-racket.git ../travis-racket
