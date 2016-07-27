@@ -1,7 +1,7 @@
 #lang scribble/manual
 @(require "private/util-doc.rkt")
 
-@title{Mocks}
+@title[#:style '(toc)]{Mocks}
 @defmodule[mock #:packages ("jack-mock")]
 @author[@author+email["Jack Firth" "jackhfirth@gmail.com"]]
 
@@ -16,9 +16,6 @@ side effects like mutation and IO.
 
 source code: @url["https://github.com/jackfirth/racket-mock"]
 
-@include-section["private/base.scrbl"]
-@include-section["private/args.scrbl"]
-@include-section["private/check.scrbl"]
-@include-section["private/opaque.scrbl"]
-@include-section["private/syntax.scrbl"]
-@include-section["private/stub.scrbl"]
+@table-of-contents[]
+@include-section["private/guide.scrbl"]
+@include-section["private/reference.scrbl"]

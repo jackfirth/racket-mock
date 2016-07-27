@@ -7,6 +7,7 @@ provide
   define-behavior-tech
   define-mock-tech
   define-opaque-tech
+  define-persistent-mock-examples
   define-stub-tech
   mock-examples
   mock-tech
@@ -17,6 +18,8 @@ provide
                  mock/rackunit
                  racket/base
                  racket/contract
+                 racket/file
+                 racket/function
                  rackunit
 
 require
@@ -27,6 +30,8 @@ require
             mock/rackunit
             racket/base
             racket/contract
+            racket/file
+            racket/function
             rackunit
 
 (define-simple-macro (define-techs [key:str use-id:id def-id:id] ...)
@@ -45,7 +50,13 @@ require
 
 (define (make-mock-eval)
   (make-base-eval #:lang 'racket/base
-                  '(require mock mock/rackunit racket/format racket/function)))
+                  '(require mock mock/rackunit racket/format racket/function racket/file)))
 
 (define-syntax-rule (mock-examples example ...)
    (examples #:eval (make-mock-eval) example ...))
+
+(define-syntax-rule (define-persistent-mock-examples id)
+  (begin
+    (define shared-eval (make-mock-eval))
+    (define-syntax-rule (id example (... ...))
+      (examples #:eval shared-eval example (... ...)))))
