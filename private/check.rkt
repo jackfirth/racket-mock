@@ -5,10 +5,8 @@ require racket/contract
         "args.rkt"
         "base.rkt"
 
-provide
-  contract-out
-    check-mock-called-with? (-> mock? arguments? void?)
-    check-mock-num-calls (-> exact-nonnegative-integer? mock? void?)
+provide check-mock-called-with?
+        check-mock-num-calls
 
 (define no-calls-made-message "No calls were made matching the expected arguments")
 
