@@ -1,11 +1,10 @@
 #lang sweet-exp racket/base
 
-require racket/contract
-        rackunit
-        mock
-
 provide check-mock-called-with?
         check-mock-num-calls
+
+require rackunit
+        mock
 
 (define no-calls-made-message "No calls were made matching the expected arguments")
 
