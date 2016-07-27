@@ -18,6 +18,7 @@ provide
                  mock/rackunit
                  racket/base
                  racket/contract
+                 racket/function
                  rackunit
 
 require
@@ -28,6 +29,7 @@ require
             mock/rackunit
             racket/base
             racket/contract
+            racket/function
             rackunit
 
 (define-simple-macro (define-techs [key:str use-id:id def-id:id] ...)
