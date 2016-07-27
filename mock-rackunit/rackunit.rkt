@@ -2,8 +2,7 @@
 
 require racket/contract
         rackunit
-        "args.rkt"
-        "base.rkt"
+        mock
 
 provide check-mock-called-with?
         check-mock-num-calls

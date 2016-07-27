@@ -4,7 +4,6 @@ require racket/function
         rackunit
         "args.rkt"
         "base.rkt"
-        "check.rkt"
         "syntax.rkt"
 
 (define (not-mock? v) (not (mock? v)))
@@ -22,11 +21,11 @@ require racket/function
 
 (test-case "Should reset mocks after with-mocks scope"
   (with-mocks bar
-    (check-mock-num-calls foo 0)
+    (check-equal? (mock-num-calls foo) 0)
     (bar)
-    (check-mock-num-calls foo 1))
+    (check-equal? (mock-num-calls foo) 1))
   (with-mocks bar
-    (check-mock-num-calls foo 0)))
+    (check-equal? (mock-num-calls foo) 0)))
 
 (with-mocks bar
   (test-equal? "Should use mock implementation in with-mocks"

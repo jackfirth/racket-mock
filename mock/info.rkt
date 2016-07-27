@@ -1,19 +1,16 @@
 #lang info
 (define collection "mock")
 (define scribblings '(("main.scrbl" (multi-page) (library) "mock")))
-(define version "0.10")
+(define version "1.0")
 (define deps
   '(("base" #:version "6.4")
-    "fancy-app"
-    "rackunit-lib"
-    "reprovide-lang"
-    "scribble-lib"
-    "sweet-exp"
-    "unstable-lib"))
+    "reprovide-lang"))
 (define build-deps
-  '("rackunit-lib"
-    "rackunit-doc"
-    "racket-doc"))
+  '("racket-doc"
+    "scribble-lib"
+    "sweet-exp"))
+(define compile-omit-paths
+  '("private"))
 (define test-omit-paths
   '(#rx"\\.scrbl$"
     #rx"info\\.rkt$"
