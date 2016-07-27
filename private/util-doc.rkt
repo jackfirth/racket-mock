@@ -18,6 +18,7 @@ provide
                  mock/rackunit
                  racket/base
                  racket/contract
+                 racket/file
                  racket/function
                  rackunit
 
@@ -29,6 +30,7 @@ require
             mock/rackunit
             racket/base
             racket/contract
+            racket/file
             racket/function
             rackunit
 
@@ -48,7 +50,7 @@ require
 
 (define (make-mock-eval)
   (make-base-eval #:lang 'racket/base
-                  '(require mock mock/rackunit racket/format racket/function)))
+                  '(require mock mock/rackunit racket/format racket/function racket/file)))
 
 (define-syntax-rule (mock-examples example ...)
    (examples #:eval (make-mock-eval) example ...))
