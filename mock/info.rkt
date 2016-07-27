@@ -4,6 +4,7 @@
 (define version "1.0")
 (define deps
   '(("base" #:version "6.4")
+    "fancy-app"
     "reprovide-lang"))
 (define build-deps
   '("racket-doc"
