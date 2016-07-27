@@ -21,5 +21,5 @@ provide check-mock-called-with?
     (m 1 2 3)
     (check-mock-called-with? m (arguments 1 2 3))))
 
-(define-simple-check (check-mock-num-calls expected-num-calls mock)
+(define-simple-check (check-mock-num-calls mock expected-num-calls)
   (equal? (mock-num-calls mock) expected-num-calls))
