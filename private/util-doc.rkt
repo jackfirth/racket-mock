@@ -7,6 +7,7 @@ provide
   define-behavior-tech
   define-mock-tech
   define-opaque-tech
+  define-persistent-mock-examples
   define-stub-tech
   mock-examples
   mock-tech
@@ -49,3 +50,9 @@ require
 
 (define-syntax-rule (mock-examples example ...)
    (examples #:eval (make-mock-eval) example ...))
+
+(define-syntax-rule (define-persistent-mock-examples id)
+  (begin
+    (define shared-eval (make-mock-eval))
+    (define-syntax-rule (id example (... ...))
+      (examples #:eval shared-eval example (... ...)))))
