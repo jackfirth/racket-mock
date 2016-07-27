@@ -15,11 +15,12 @@ before_install:
   - raco pkg install --auto cover cover-coveralls doc-coverage
 
 install:
-  - raco pkg install --auto $TRAVIS_BUILD_DIR
+  - raco pkg install --auto $TRAVIS_BUILD_DIR/mock
+  - raco pkg install --auto $TRAVIS_BUILD_DIR/mock-rackunit
 
 script:
- - raco test $TRAVIS_BUILD_DIR
+ - raco test -c mock
  - raco doc-coverage mock mock/rackunit
 
 after_success:
- - raco cover -f coveralls -d $TRAVIS_BUILD_DIR/coverage .
+ - raco cover -f coveralls -d $TRAVIS_BUILD_DIR/coverage -c mock
