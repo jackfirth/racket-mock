@@ -3,8 +3,7 @@ Mocks for Racket testing.
 
 ```bash
 raco pkg install mock
-# RackUnit integration is in a separate library
-raco pkg install mock-rackunit
+raco pkg install mock-rackunit # RackUnit integration
 ```
 
 Documentation: [`mock`](http://pkg-build.racket-lang.org/doc/mock/index.html)
