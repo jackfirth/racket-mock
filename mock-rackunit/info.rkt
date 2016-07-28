@@ -13,5 +13,4 @@
     "sweet-exp"))
 (define test-omit-paths
   '(#rx"\\.scrbl$"
-    #rx"info\\.rkt$"
-    #rx"util-doc\\.rkt$"))
+    #rx"info\\.rkt$"))
