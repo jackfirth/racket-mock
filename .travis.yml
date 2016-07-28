@@ -3,7 +3,6 @@ sudo: false
 env:
   global:
     - RACKET_DIR=~/racket
-    - RACKET_VERSION_TO_COVER=6.5
   matrix:
     - RACKET_VERSION=6.4
     - RACKET_VERSION=6.5
@@ -20,7 +19,6 @@ install:
   - raco pkg install --auto $TRAVIS_BUILD_DIR/mock-rackunit
 
 script:
-  - [ "${RACKET_VERSION_TO_COVER}" != "${RACKET_VERSION}" ]
   - raco test -c mock
   - raco doc-coverage mock mock/rackunit
-  - [ "${RACKET_VERSION_TO_COVER}" != "${RACKET_VERSION}" ] || raco cover -f coveralls -d $TRAVIS_BUILD_DIR/coverage -c mock
+  - raco cover -f coveralls -d $TRAVIS_BUILD_DIR/coverage -c mock
