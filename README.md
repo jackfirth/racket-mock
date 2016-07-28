@@ -6,11 +6,11 @@ raco pkg install mock
 raco pkg install mock-rackunit # RackUnit integration
 ```
 
-Documentation: [`mock`](http://pkg-build.racket-lang.org/doc/mock/index.html)
+Documentation: [`mock`](http://docs.racket-lang.org/mock@mock/index.html), [`mock-rackunit`](http://docs.racket-lang.org/mock-rackunit@mock-rackunit/index.html)
 
 This library defines *mocks*, which are "fake" implementations of functions that record calls made to them.
 Two separate packages are provided, the main package `mock` and the RackUnit checks package `mock-rackunit`.
-In standard uses, the `mock-rackunit` dependency is needed only for test code.
+In standard uses, the `mock-rackunit` dependency is needed only for test code. For a thorough introduction, see [The Mock Guide](http://docs.racket-lang.org/mock@mock/mock-guide.html). For a full API reference, see [The Mock Reference](http://docs.racket-lang.org/mock@mock/mock-reference.html).
 
 Example:
 
