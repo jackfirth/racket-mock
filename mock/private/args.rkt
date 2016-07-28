@@ -20,7 +20,8 @@ provide
 require fancy-app
 
 module+ test
-  require rackunit
+  require racket/format
+          rackunit
 
 (define keyword-hash? (hash/c keyword? any/c #:immutable #t #:flat? #t))
 
@@ -31,10 +32,32 @@ module+ test
 
 (define (kws+vs->hash kws vs) (make-immutable-hash (map cons kws vs)))
 
+(define (arguments-custom-write args port mode)
+  (define recur
+    (case mode
+      [(#t) write]
+      [(#f) display]
+      [else (lambda (p port) (print p port mode))]))
+  (write-string "(arguments" port)
+  (for ([arg (in-list (arguments-positional args))])
+    (write-string " " port)
+    (recur arg port))
+  (define kwargs (arguments-keyword args))
+  (define kws (sort (hash-keys (arguments-keyword args)) keyword<?))
+  (for ([kw (in-list kws)])
+    (define arg (hash-ref kwargs kw))
+    (write-string " #:" port)
+    (write-string (keyword->string kw) port)
+    (write-string " " port)
+    (recur arg port))
+  (write-string ")" port))
+
 (struct arguments (positional keyword)
   #:transparent
   #:constructor-name make-arguments
-  #:omit-define-syntaxes)
+  #:omit-define-syntaxes
+  #:methods gen:custom-write
+  [(define write-proc arguments-custom-write)])
 
 (define arguments
   (make-keyword-procedure
@@ -42,12 +65,25 @@ module+ test
      (make-arguments vs (kws+vs->hash kws kw-vs)))))
 
 (module+ test
-  (check-equal? (arguments) (make-arguments '() (hash)))
-  (check-equal? (arguments 1 2 3) (make-arguments '(1 2 3) (hash)))
-  (check-equal? (arguments #:foo 'bar #:baz "blah")
-                (make-arguments '() (hash '#:foo 'bar '#:baz "blah")))
-  (check-equal? (arguments 1 2 3 #:foo 'bar #:baz "blah")
-                (make-arguments '(1 2 3) (hash '#:foo 'bar '#:baz "blah"))))
+  (test-equal? "Args constructors should agree when given no values"
+               (arguments) (make-arguments '() (hash)))
+  (test-equal? "Args constructors should agree when given positional values"
+               (arguments 1 2 3) (make-arguments '(1 2 3) (hash)))
+  (test-equal? "Args constructors should agree when given keyword values"
+               (arguments #:foo 'bar #:baz "blah")
+               (make-arguments '() (hash '#:foo 'bar '#:baz "blah")))
+  (test-equal?
+   "Args constructors should agree when given positional and keyword values"
+   (arguments 1 2 3 #:foo 'bar #:baz "blah")
+   (make-arguments '(1 2 3) (hash '#:foo 'bar '#:baz "blah")))
+  (test-equal?
+   "Args value should write the same as positional-first keyword sorted call"
+   (~s (arguments 1  #:foo 'bar 2 3 #:baz "blah"))
+   "(arguments 1 2 3 #:baz \"blah\" #:foo bar)")
+  (test-equal?
+   "Args value should display the same as positional-first keyword sorted call"
+   (~a (arguments 1  #:foo 'bar 2 3 #:baz "blah"))
+   "(arguments 1 2 3 #:baz blah #:foo bar)"))
 
 (define (format-positional-args-message args)
   (apply string-append
