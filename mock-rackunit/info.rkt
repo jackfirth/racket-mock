@@ -14,3 +14,5 @@
 (define test-omit-paths
   '(#rx"\\.scrbl$"
     #rx"info\\.rkt$"))
+(define cover-omit-paths
+  '("rackunit.rkt"))
