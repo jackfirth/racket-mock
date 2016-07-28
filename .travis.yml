@@ -20,8 +20,7 @@ install:
   - raco pkg install --auto $TRAVIS_BUILD_DIR/mock-rackunit
 
 script:
-  - alias should-not-cover='[ "${RACKET_VERSION_TO_COVER}" != "${RACKET_VERSION}" ]'
   - raco test -c mock
   - raco doc-coverage mock mock/rackunit
-  - should-not-cover
-  - should-not-cover || raco cover -f coveralls -d $TRAVIS_BUILD_DIR/coverage -c mock
+  - [ "${RACKET_VERSION_TO_COVER}" != "${RACKET_VERSION}" ]
+  - [ "${RACKET_VERSION_TO_COVER}" != "${RACKET_VERSION}" ] || raco cover -f coveralls -d $TRAVIS_BUILD_DIR/coverage -c mock
