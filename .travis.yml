@@ -19,8 +19,7 @@ install:
   - raco pkg install --auto $TRAVIS_BUILD_DIR/mock-rackunit
 
 script:
- - raco test -c mock
- - raco doc-coverage mock mock/rackunit
-
-after_success:
- - raco cover -f coveralls -d $TRAVIS_BUILD_DIR/coverage -c mock
+  - alias should-not-cover='[ "${RACKET_VERSION}" == "6.6" ]'
+  - raco test -c mock
+  - raco doc-coverage mock mock/rackunit
+  - should-not-deploy || raco cover -f coveralls -d $TRAVIS_BUILD_DIR/coverage -c mock
