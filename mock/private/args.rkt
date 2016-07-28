@@ -83,7 +83,12 @@ module+ test
   (test-equal?
    "Args value should display the same as positional-first keyword sorted call"
    (~a (arguments 1  #:foo 'bar 2 3 #:baz "blah"))
-   "(arguments 1 2 3 #:baz blah #:foo bar)"))
+   "(arguments 1 2 3 #:baz blah #:foo bar)")
+  (test-equal?
+   "Args value should print the same as positional-first keyword sorted call"
+   (~v (arguments 1  #:foo 'bar 2 3 #:baz "blah"))
+   "(arguments 1 2 3 '#:baz \"blah\" '#:foo 'bar)"))
+
 
 (define (format-positional-args-message args)
   (apply string-append
