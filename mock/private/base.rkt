@@ -7,6 +7,7 @@ provide
   contract-out
     current-mock-name (-> (or/c symbol? #f))
     current-mock-calls (-> (listof mock-call?))
+    current-mock-num-calls (-> exact-nonnegative-integer?)
     mock? predicate/c
     mock (->* () (#:name symbol? #:behavior procedure?) mock?)
     mock-reset! (-> mock? void?)
@@ -48,16 +49,19 @@ module+ test
 
 (define-mock-proc-parameter
   [current-mock-name-proc current-mock-name]
-  [current-mock-calls-proc current-mock-calls])
+  [current-mock-calls-proc current-mock-calls]
+  [current-mock-num-calls-proc current-mock-num-calls])
 
 (define call-mock-behavior
   (make-keyword-procedure
    (λ (kws kw-vs a-mock . vs)
      (define current-behavior (mock-behavior a-mock))
      (define calls-box (mock-calls-box a-mock))
+     (define calls (unbox calls-box))
      (define results
        (parameterize ([current-mock-name-proc (const (mock-name a-mock))]
-                      [current-mock-calls-proc (const (unbox calls-box))])
+                      [current-mock-calls-proc (const calls)]
+                      [current-mock-num-calls-proc (const (length calls))])
          (with-values-as-list
           (keyword-apply (current-behavior) kws kw-vs vs))))
      (define args (make-arguments vs (kws+vs->hash kws kw-vs)))
@@ -123,7 +127,17 @@ module+ test
                  (list (mock-call (arguments 1 2 3) (list (list))))))
   (test-exn
    "The current mock call history shouldn't be available outside behaviors"
-   exn:fail? current-mock-calls))
+   exn:fail? current-mock-calls)
+  (define return-mock-count (thunk* (current-mock-num-calls)))
+  (test-begin
+   "The current mock call count should be available to behaviors"
+   (define count-mock (mock #:behavior return-mock-count))
+   (check-equal? (count-mock 1 2 3) 0)
+   (check-equal? (count-mock #:foo 'bar) 1)
+   (check-equal? (count-mock 'a #:b 'c) 2))
+  (test-exn
+   "The current mock call count shouldn't be available outside behaviors"
+   exn:fail? current-mock-num-calls))
 
 (define mock-num-calls (compose length mock-calls))
 

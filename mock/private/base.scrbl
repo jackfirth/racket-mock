@@ -54,12 +54,11 @@
  (log-mock-anon 1 2 3)
  (log-mock-anon 'foo 'bar)]}
 
-@define-persistent-mock-examples[mock-calls-examples]
 @defproc[(current-mock-calls) (listof mock-call?)]{
  Returns a list of all the previous calls of the current @mock-tech{mock} being
  called. This is for use in @behavior-tech{behaviors}, for example to implement
  a behavior that returns a set of all keywords its ever been called with.
- @mock-calls-examples[
+ @mock-examples[
  (define keyword-set
    (make-keyword-procedure
     (λ (kws _)
@@ -73,8 +72,25 @@
  (kw-set-mock #:baz "blah")]
 
  If called outside the context of a mock behavior call, raises @racket[exn:fail].
- @mock-calls-examples[
+ @mock-examples[
  (eval:error (current-mock-calls))]}
+
+@defproc[(current-mock-num-calls) exact-nonnegative-integer?]{
+ Returns the number of times the current @mock-tech{mock} being called has already
+ been called. This is for use in @behavior-tech{beahviors}, for example to log the
+ number of times this mock has been called.
+ @mock-examples[
+ (define (log-count)
+   (printf "Mock called ~a times previously" (current-mock-num-calls)))
+ (define count-mock (mock #:behavior log-count))
+ (count-mock)
+ (count-mock)
+ (mock-reset! count-mock)
+ (count-mock)]
+
+ If called outside the context of a mock behavior call, raises @racket[exn:fail].
+ @mock-examples[
+ (eval:error (current-mock-num-calls))]}
 
 @defproc[(mock-reset! [m mock?]) void?]{
  Erases the history of @racket[mock-call] values in @racket[m].
