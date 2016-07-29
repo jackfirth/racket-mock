@@ -52,7 +52,8 @@
  @mock-name-examples[
  (define log-mock-anon (mock #:behavior log-call))
  (log-mock-anon 1 2 3)
- (log-mock-anon 'foo 'bar)]}
+ (log-mock-anon 'foo 'bar)]
+ @history[#:added "1.1"]}
 
 @defproc[(current-mock-calls) (listof mock-call?)]{
  Returns a list of all the previous calls of the current @mock-tech{mock} being
@@ -73,7 +74,8 @@
 
  If called outside the context of a mock behavior call, raises @racket[exn:fail].
  @mock-examples[
- (eval:error (current-mock-calls))]}
+ (eval:error (current-mock-calls))]
+ @history[#:added "1.2"]}
 
 @defproc[(current-mock-num-calls) exact-nonnegative-integer?]{
  Returns the number of times the current @mock-tech{mock} being called has already
@@ -90,7 +92,8 @@
 
  If called outside the context of a mock behavior call, raises @racket[exn:fail].
  @mock-examples[
- (eval:error (current-mock-num-calls))]}
+ (eval:error (current-mock-num-calls))]
+ @history[#:added "1.3"]}
 
 @defproc[(mock-reset! [m mock?]) void?]{
  Erases the history of @racket[mock-call] values in @racket[m].
