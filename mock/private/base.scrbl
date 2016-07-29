@@ -81,7 +81,7 @@
  number of times this mock has been called.
  @mock-examples[
  (define (log-count)
-   (printf "Mock called ~a times" (current-mock-num-calls)))
+   (printf "Mock called ~a times previously" (current-mock-num-calls)))
  (define count-mock (mock #:behavior log-count))
  (count-mock)
  (count-mock)
