@@ -31,7 +31,7 @@
  (eval:error (uncallable-mock 1 2 3 #:foo 'bar #:bar "blah"))]}
 
 @define-persistent-mock-examples[mock-name-examples]
-@defproc[(current-mock-name) symbol?]{
+@defproc[(current-mock-name) (or/c symbol? #f)]{
  Returns the name of the current @mock-tech{mock} being called. This is for use
  in @behavior-tech{behaviors}, for example to raise an error with a message in
  terms of the mock currently being called.
@@ -53,6 +53,28 @@
  (define log-mock-anon (mock #:behavior log-call))
  (log-mock-anon 1 2 3)
  (log-mock-anon 'foo 'bar)]}
+
+@define-persistent-mock-examples[mock-calls-examples]
+@defproc[(current-mock-calls) (listof mock-call?)]{
+ Returns a list of all the previous calls of the current @mock-tech{mock} being
+ called. This is for use in @behavior-tech{behaviors}, for example to implement
+ a behavior that returns a set of all keywords its ever been called with.
+ @mock-calls-examples[
+ (define keyword-set
+   (make-keyword-procedure
+    (λ (kws _)
+      (define (call-kws call)
+        (hash-keys (arguments-keyword (mock-call-args call))))
+      (define prev-kws
+        (append-map call-kws (current-mock-calls)))
+      (apply set (append kws prev-kws)))))
+ (define kw-set-mock (mock #:behavior keyword-set))
+ (kw-set-mock #:foo 'bar)
+ (kw-set-mock #:baz "blah")]
+
+ If called outside the context of a mock behavior call, raises @racket[exn:fail].
+ @mock-calls-examples[
+ (eval:error (current-mock-calls))]}
 
 @defproc[(mock-reset! [m mock?]) void?]{
  Erases the history of @racket[mock-call] values in @racket[m].

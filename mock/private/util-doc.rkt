@@ -47,9 +47,12 @@ require
   ["opaque" opaque-tech define-opaque-tech]
   ["stub" stub-tech define-stub-tech])
 
+(define mock-requires
+  '(mock racket/format racket/function racket/file racket/list racket/set))
+
 (define (make-mock-eval)
   (make-base-eval #:lang 'racket/base
-                  '(require mock racket/format racket/function racket/file)))
+                  (cons 'require mock-requires)))
 
 (define-syntax-rule (mock-examples example ...)
    (examples #:eval (make-mock-eval) example ...))
