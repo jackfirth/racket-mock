@@ -30,6 +30,30 @@
  (define uncallable-mock (mock #:name 'uncallable-mock))
  (eval:error (uncallable-mock 1 2 3 #:foo 'bar #:bar "blah"))]}
 
+@define-persistent-mock-examples[mock-name-examples]
+@defproc[(current-mock-name) symbol?]{
+ Returns the name of the current @mock-tech{mock} being called. This is for use
+ in @behavior-tech{behaviors}, for example to raise an error with a message in
+ terms of the mock currently being called.
+ @mock-name-examples[
+ (define (log-call . vs)
+   (printf "Mock ~a called with ~a args"
+           (or (current-mock-name) 'anonymous)
+           (length vs)))
+ (define log-mock (mock #:name 'log-mock #:behavior log-call))
+ (log-mock 1 2 3)
+ (log-mock 'foo 'bar)]
+
+ If called outside the context of a mock behavior call, raises @racket[exn:fail].
+ @mock-name-examples[
+ (eval:error (current-mock-name))]
+
+ If the mock being called is anonymous, returns @racket[#f].
+ @mock-name-examples[
+ (define log-mock-anon (mock #:behavior log-call))
+ (log-mock-anon 1 2 3)
+ (log-mock-anon 'foo 'bar)]}
+
 @defproc[(mock-reset! [m mock?]) void?]{
  Erases the history of @racket[mock-call] values in @racket[m].
  @mock-examples[
