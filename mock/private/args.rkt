@@ -46,8 +46,8 @@ module+ test
   (define kws (sort (hash-keys (arguments-keyword args)) keyword<?))
   (for ([kw (in-list kws)])
     (define arg (hash-ref kwargs kw))
-    (write-string " " port)
-    (recur kw port)
+    (write-string " #:" port)
+    (write-string (keyword->string kw) port)
     (write-string " " port)
     (recur arg port))
   (write-string ")" port))
@@ -87,7 +87,11 @@ module+ test
   (test-equal?
    "Args value should print the same as positional-first keyword sorted call"
    (~v (arguments 1  #:foo 'bar 2 3 #:baz "blah"))
-   "(arguments 1 2 3 '#:baz \"blah\" '#:foo 'bar)"))
+   "(arguments 1 2 3 #:baz \"blah\" #:foo 'bar)")
+  (test-begin
+   "Args values should print unambiguosly in the face of quoted positional keywords"
+   (check-not-equal? (~v (arguments #:foo 'bar))
+                     (~v (arguments '#:foo 'bar)))))
 
 
 (define (format-positional-args-message args)
