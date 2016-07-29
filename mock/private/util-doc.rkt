@@ -17,8 +17,10 @@ provide
     all-from-out mock
                  racket/base
                  racket/contract
+                 racket/list
                  racket/file
                  racket/function
+                 racket/set
 
 require
   scribble/example
@@ -27,8 +29,10 @@ require
   for-label mock
             racket/base
             racket/contract
+            racket/list
             racket/file
             racket/function
+            racket/set
 
 (define mock-doc
   '(lib "mock/main.scrbl"))
