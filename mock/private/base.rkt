@@ -6,6 +6,7 @@ provide
   with-mock-behavior
   contract-out
     current-mock-name (-> (or/c symbol? #f))
+    current-mock-calls (-> (listof mock-call?))
     mock? predicate/c
     mock (->* () (#:name symbol? #:behavior procedure?) mock?)
     mock-reset! (-> mock? void?)
@@ -32,14 +33,22 @@ module+ test
 (define-syntax-rule (with-values-as-list body ...)
   (call-with-values (thunk body ...) list))
 
-(define current-mock-name-proc
+(define (make-mock-proc-parameter source-name)
+  (define message
+    (format "~a: can't be called outside mock behavior" source-name))
   (make-parameter
-   (thunk
-    (raise (make-exn:fail "current-mock-name: can't be called outside mock behavior"
-                          (current-continuation-marks))))))
+   (thunk (raise (make-exn:fail message (current-continuation-marks))))))
 
-(define (current-mock-name)
-  ((current-mock-name-proc)))
+(define-simple-macro (define-mock-proc-parameter [proc-id id] ...)
+  (begin
+    (begin
+      (define proc-id (make-mock-proc-parameter 'id))
+      (define (id) ((proc-id))))
+    ...))
+
+(define-mock-proc-parameter
+  [current-mock-name-proc current-mock-name]
+  [current-mock-calls-proc current-mock-calls])
 
 (define call-mock-behavior
   (make-keyword-procedure
@@ -47,8 +56,10 @@ module+ test
      (define current-behavior (mock-behavior a-mock))
      (define calls-box (mock-calls-box a-mock))
      (define results
-       (parameterize ([current-mock-name-proc (const (mock-name a-mock))])
-         (with-values-as-list (keyword-apply (current-behavior) kws kw-vs vs))))
+       (parameterize ([current-mock-name-proc (const (mock-name a-mock))]
+                      [current-mock-calls-proc (const (unbox calls-box))])
+         (with-values-as-list
+          (keyword-apply (current-behavior) kws kw-vs vs))))
      (define args (make-arguments vs (kws+vs->hash kws kw-vs)))
      (add-call! calls-box (mock-call args results))
      (apply values results))))
@@ -96,14 +107,23 @@ module+ test
                (~a (mock)) "#<procedure:mock>")
   (test-exn "The current mock name shouldn't be available outside behaviors"
             exn:fail? current-mock-name)
-  (define return-mock-name
-    (make-keyword-procedure (λ (kw kw-vs . vs) (current-mock-name))))
+  (define return-mock-name (thunk* (current-mock-name)))
   (test-equal?
    "The current mock name should be available to behaviors"
    ((mock #:name 'foo #:behavior return-mock-name) 1 2 3) 'foo)
   (test-equal?
    "The current mock name should be false for anonymous mocks"
-   ((mock #:behavior return-mock-name) 1 2 3) #f))
+   ((mock #:behavior return-mock-name) 1 2 3) #f)
+  (define return-mock-calls (thunk* (current-mock-calls)))
+  (test-begin
+   "The current mock call history should be available to behaviors"
+   (define calls-mock (mock #:behavior return-mock-calls))  
+   (check-equal? (calls-mock 1 2 3) '())
+   (check-equal? (calls-mock #:foo 'bar)
+                 (list (mock-call (arguments 1 2 3) (list (list))))))
+  (test-exn
+   "The current mock call history shouldn't be available outside behaviors"
+   exn:fail? current-mock-calls))
 
 (define mock-num-calls (compose length mock-calls))
 
