@@ -12,6 +12,7 @@ provide
   mock-examples
   mock-tech
   opaque-tech
+  parameter-tech
   stub-tech
   for-label
     all-from-out mock
@@ -50,6 +51,9 @@ require
   ["mock" mock-tech define-mock-tech]
   ["opaque" opaque-tech define-opaque-tech]
   ["stub" stub-tech define-stub-tech])
+
+(define (parameter-tech . pre-flow)
+  (apply tech #:doc '(lib "scribblings/guide/guide.scrbl") pre-flow))
 
 (define mock-requires
   '(mock racket/format racket/function racket/file racket/list racket/set))
