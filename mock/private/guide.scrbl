@@ -22,7 +22,9 @@ example, how would one test this procedure?
 @mock-intro-examples[
  (define (call/secret proc)
    (proc "secret")
-   (void))]
+   (void))
+ (call/secret print)
+ (call/secret values)]
 
 Howw can a test verify that the secret value is passed correctly? It would be one thing
 if @racket[call/secret] returned the result of the call, then we could simply pass in
