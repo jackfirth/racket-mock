@@ -5,6 +5,7 @@ require racket/contract/base
 provide
   with-mock-behavior
   contract-out
+    current-mock-name (-> (or/c symbol? #f))
     mock? predicate/c
     mock (->* () (#:name symbol? #:behavior procedure?) mock?)
     mock-reset! (-> mock? void?)
@@ -31,30 +32,51 @@ module+ test
 (define-syntax-rule (with-values-as-list body ...)
   (call-with-values (thunk body ...) list))
 
+(define current-mock-name-proc
+  (make-parameter
+   (thunk
+    (raise (make-exn:fail "current-mock-name: can't be called outside mock behavior"
+                          (current-continuation-marks))))))
+
+(define (current-mock-name)
+  ((current-mock-name-proc)))
+
 (define call-mock-behavior
   (make-keyword-procedure
    (λ (kws kw-vs a-mock . vs)
      (define current-behavior (mock-behavior a-mock))
      (define calls-box (mock-calls-box a-mock))
      (define results
-       (with-values-as-list (keyword-apply (current-behavior) kws kw-vs vs)))
+       (parameterize ([current-mock-name-proc (const (mock-name a-mock))])
+         (with-values-as-list (keyword-apply (current-behavior) kws kw-vs vs))))
      (define args (make-arguments vs (kws+vs->hash kws kw-vs)))
      (add-call! calls-box (mock-call args results))
      (apply values results))))
 
+(define (mock-custom-write a-mock port mode)
+  (write-string "#<procedure:mock" port)
+  (define name (mock-name a-mock))
+  (when name
+    (write-string ":" port)
+    (write-string (symbol->string name) port))
+  (write-string ">" port))
+
 (struct mock-call (args results) #:transparent)
-(struct mock (behavior calls-box)
+(struct mock (name behavior calls-box)
   #:property prop:procedure call-mock-behavior
+  #:property prop:object-name (struct-field-index name)
   #:constructor-name make-mock
-  #:omit-define-syntaxes)
+  #:omit-define-syntaxes
+  #:methods gen:custom-write
+  [(define write-proc mock-custom-write)])
 
 (define (add-call! calls-box call)
   (box-transform! calls-box (append _ (list call))))
 
-(define (mock #:behavior [given-behavior #f] #:name [name 'mock])
+(define (mock #:behavior [given-behavior #f] #:name [name #f])
   (define behavior
-    (or given-behavior (make-raise-unexpected-arguments-exn name)))
-  (make-mock (make-parameter behavior) (box '())))
+    (or given-behavior raise-unexpected-mock-call))
+  (make-mock name (make-parameter behavior) (box '())))
 
 (define mock-calls (compose unbox mock-calls-box))
 
@@ -66,7 +88,22 @@ module+ test
     (check-equal? (mock-calls m)
                   (list (mock-call (arguments 0) '("0"))
                         (mock-call (arguments 0 #:width 3 #:align 'left)
-                                   '("0  "))))))
+                                   '("0  ")))))
+  (test-equal?
+   "Mocks should print like named procedures, but identify themselves as mocks"
+   (~a (mock #:name 'foo)) "#<procedure:mock:foo>")
+  (test-equal? "Anonymous mocks should print like a procedure named mock"
+               (~a (mock)) "#<procedure:mock>")
+  (test-exn "The current mock name shouldn't be available outside behaviors"
+            exn:fail? current-mock-name)
+  (define return-mock-name
+    (make-keyword-procedure (λ (kw kw-vs . vs) (current-mock-name))))
+  (test-equal?
+   "The current mock name should be available to behaviors"
+   ((mock #:name 'foo #:behavior return-mock-name) 1 2 3) 'foo)
+  (test-equal?
+   "The current mock name should be false for anonymous mocks"
+   ((mock #:behavior return-mock-name) 1 2 3) #f))
 
 (define mock-num-calls (compose length mock-calls))
 
@@ -114,3 +151,9 @@ module+ test
     (check-equal? (num-proc-mock 0) 1)
     (with-mock-behavior ([num-proc-mock sub1])
       (check-equal? (num-proc-mock 0) -1))))
+
+(define raise-unexpected-mock-call
+  (make-keyword-procedure
+   (λ (kws kw-vs . vs)
+     (define proc (make-raise-unexpected-arguments-exn (or (current-mock-name) 'mock)))
+     (keyword-apply proc kws kw-vs vs))))
