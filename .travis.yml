@@ -4,8 +4,8 @@ env:
   global:
     - RACKET_DIR=~/racket
   matrix:
-    - RACKET_VERSION=6.4
-    - RACKET_VERSION=6.5
+    - RACKET_VERSION=6.4 RUN_COVER=true
+    - RACKET_VERSION=6.5 RUN_COVER=true
     - RACKET_VERSION=6.6
     - RACKET_VERSION=HEAD
 
@@ -23,4 +23,4 @@ install:
 script:
   - raco test -c mock
   - raco doc-coverage mock mock/rackunit
-  - raco cover -f coveralls -d $TRAVIS_BUILD_DIR/coverage -c mock
+  - if [ -n "$RUN_COVER" ]; then raco cover -f coveralls -d $TRAVIS_BUILD_DIR/coverage -c mock; fi
