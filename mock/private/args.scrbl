@@ -24,6 +24,10 @@ for constructing and manipulating these structures are provided by @racketmodnam
  @mock-examples[
  (arguments 1 2 3 #:foo "bar")]}
 
+@defthing[#:kind "value" empty-arguments arguments?]{
+ The empty @args-tech{arguments structure}. Equivalent to @racket[(arguments)].
+ @history[#:added "1.4"]}
+
 @defthing[#:kind "value" keyword-hash? flat-contract?]{
  A flat contract that recognizes immutable hashes whose keys are keywords. Equivalent
  to @racket[(hash/c keyword? any/c #:flat? #t #:immutable #t)]. Used for the keyword
