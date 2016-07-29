@@ -75,6 +75,23 @@
  @mock-examples[
  (eval:error (current-mock-calls))]}
 
+@defproc[(current-mock-num-calls) exact-nonnegative-integer?]{
+ Returns the number of times the current @mock-tech{mock} being called has already
+ been called. This is for use in @behavior-tech{beahviors}, for example to log the
+ number of times this mock has been called.
+ @mock-examples[
+ (define (log-count)
+   (printf "Mock called ~a times" (current-mock-num-calls)))
+ (define count-mock (mock #:behavior log-count))
+ (count-mock)
+ (count-mock)
+ (mock-reset! count-mock)
+ (count-mock)]
+
+ If called outside the context of a mock behavior call, raises @racket[exn:fail].
+ @mock-examples[
+ (eval:error (current-mock-num-calls))]}
+
 @defproc[(mock-reset! [m mock?]) void?]{
  Erases the history of @racket[mock-call] values in @racket[m].
  @mock-examples[
