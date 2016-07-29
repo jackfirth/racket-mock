@@ -149,7 +149,7 @@ of a good example we'll assume we want a combined history. We can use
                                  #:print-with displayln-mock))
  (mock-calls displayln-mock)]
 
-A mocks behavior is a @racket[parameter] under the hood, so @racket[with-mock-behavior]
+A mocks behavior is a @tech[#:doc '(lib "scribblings/guide/guide.scrbl")]{parameter} under the hood, so @racket[with-mock-behavior]
 acts similarly to @racket[parameterize]. While here we could have made a second mock,
 in the next section we'll introduce automatic mocking which defines one mock per
 dependency for us.
