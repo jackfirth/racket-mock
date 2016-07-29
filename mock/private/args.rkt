@@ -11,6 +11,7 @@ provide
     arguments-keyword (-> arguments? keyword-hash?)
     arguments (unconstrained-domain-> arguments?)
     make-arguments (-> list? keyword-hash? arguments?)
+    empty-arguments arguments?
     struct (exn:fail:unexpected-arguments exn:fail)
       ([message string?]
        [continuation-marks continuation-mark-set?]
@@ -89,6 +90,7 @@ module+ test
    (~v (arguments 1  #:foo 'bar 2 3 #:baz "blah"))
    "(arguments 1 2 3 '#:baz \"blah\" '#:foo 'bar)"))
 
+(define empty-arguments (arguments))
 
 (define (format-positional-args-message args)
   (apply string-append
