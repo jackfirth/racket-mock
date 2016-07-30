@@ -225,3 +225,135 @@ mock associated with @racket[print-favorite-color-message].
 
 This makes setting up mocked dependencies much simpler. The @racket[define/mock] form
 has a few other options to control its behavior, see @secref{mock-reference} for details.
+
+@define-persistent-mock-examples[mock-stub-examples/manual]
+@define-persistent-mock-examples[mock-stub-examples]
+@section{Stubbing Undefined Dependencies}
+
+When testing with mocks, we're able to test how a procedure calls its dependencies
+without actually using real dependencies. In theory then, there's no reason those
+dependencies need to be implemented before we write our test. Consider a procedure in a
+web application that checks whether the current user is authenticated. What are its
+dependencies? Clearly there must be some sort of @racket[user] datatype and a
+@racket[user-admin?] predicate. There must also be a way to determine the user associated
+with the current request, call that @racket[current-user]. And if the user isn't an admin,
+there must be some sort of @racket[raise-non-admin-access-error] procedure to throw an
+exception indicating the lack of access. We can try and define a
+@racket[check-current-user-admin] procedure in terms of these pieces before defining the
+pieces, but our code won't compile.
+
+@mock-examples[
+ (define (check-current-user-admin)
+   (define user (current-user))
+   (unless (user-admin? user)
+     (raise-non-admin-access-error user)))]
+
+If we're testing @racket[check-current-user-admin] with mocks, since all those dependencies
+will be mocked out anyway we could just define fake implementations for them.
+
+@mock-stub-examples/manual[
+ (define current-user #f)
+ (define user-admin? #f)
+ (define raise-non-admin-access-error #f)
+ (define/mock (check-current-user-admin)
+   #:mock current-user #:with-behavior (const "user")
+   #:mock user-admin? #:with-behavior (const #t)
+   #:mock raise-non-admin-access-error
+   (define user (current-user))
+   (unless (user-admin? user)
+     (raise-non-admin-access-error user)))]
+
+Now we can test @racket[check-current-user-admin] without properly defining real dependencies.
+
+@mock-stub-examples/manual[
+ (with-mocks check-current-user-admin
+   (check-current-user-admin)
+   (mock-calls raise-non-admin-access-error)
+   (with-mock-behavior ([user-admin? (const #f)]
+                        [raise-non-admin-access-error void])
+     (check-current-user-admin)
+     (println (mock-calls raise-non-admin-access-error))))]
+
+Nice as this approach could be, it's still rather tedious to define each of those fake
+dependencies. And if they're @emph{actually} called, the error message is a terrible one
+about the evils of treating @racket[#f] as a procedure. The @racketmodname[mock] library
+provides a @racket[stub] form for automatically defining these sorts of fake implementations.
+
+@mock-stub-examples[
+ (stub current-user user-admin? raise-non-admin-access-error)
+ (define/mock (check-current-user-admin)
+   #:mock current-user #:with-behavior (const "user")
+   #:mock user-admin? #:with-behavior (const #f)
+   #:mock raise-non-admin-access-error
+   (define user (current-user))
+   (unless (user-admin? user)
+     (raise-non-admin-access-error user)))]
+
+We can now better control the order in which we implement procedures, writing tests as we
+go and even writing code in a test-first fashion.
+
+@section{Mocking and Opaque Values}
+
+Libraries often define "special" values that can't be inspected and are only obtainable
+through the library, such as database connections or other "opaque" values. When mocking
+dependency functions from that library, we often end up in a situation where a mocked
+dependency produces one of these values and another mock consumes it. In this case, it
+doesn't matter at all what the producer returns.
+
+@mock-examples[
+ (stub db-connect! db-list-ids)
+ (define/mock (list-db-user-ids)
+   #:mock db-connect! #:with-behavior (const "some random value")
+   #:mock db-list-ids #:with-behavior (const '(1 2 3))
+   (db-list-ids (db-connect!) 'users))
+ (with-mocks list-db-user-ids
+   (println (list-db-user-ids))
+   (println (mock-calls db-list-ids)))]
+
+We could have returned any value at all from the @racket[db-connect!] procedure, for unit
+testing purposes all we care about is that whatever @racket[db-connect!] returns is passed
+in properly to @racket[db-list-ids]. However, this could lead to problems if we accidentally
+passed the "connection" value somewhere else. If given to a procedure that prints out a string,
+instead of throwing an error we'll get "some random value" printed out unexpectedly. What we'd
+really like is to create some value that can @emph{only} be used as a mock connection. The
+@racket[define-opaque] form lets us define opaque values, which are completely black-boxed
+values with no meaning that any procedure could extract from them.
+
+@mock-examples[
+ (stub db-connect! db-list-ids)
+ (define-opaque test-connection)
+ (define/mock (list-db-user-ids)
+   #:mock db-connect! #:with-behavior (const test-connection)
+   #:mock db-list-ids #:with-behavior (const '(1 2 3))
+   (db-list-ids (db-connect!) 'users))
+ (with-mocks list-db-user-ids
+   (println (list-db-user-ids))
+   (println (mock-calls db-list-ids)))
+ (eval:error (add1 test-connection))
+ (test-connection? test-connection)]
+
+In this example, we've defined an opaque @racket[test-connection] value that our tests can
+look for. It's impossible to misuse this value, and it helpfully identifies itself in error
+messages when passed around unexpectedly. The @racket[define-opaque] form defines both an
+opaque value and a predicate that can be used to recognize that value. In tests, we can
+look for the opaque value in mock call history with the predicate or @racket[equal?].
+
+In addition to @racket[define-opaque], the @racket[define/mock] form provides a handy syntax
+for defining an opaque value that only that definition's mocks and @racket[with-mocks]
+enclosed code can reference. Simply add the identifier in an @racket[#:opaque] clause.
+
+@mock-examples[
+ (stub db-connect! db-list-ids)
+ (define/mock (list-db-user-ids)
+   #:opaque test-connection
+   #:mock db-connect! #:with-behavior (const test-connection)
+   #:mock db-list-ids #:with-behavior (const '(1 2 3))
+   (db-list-ids (db-connect!) 'users))
+ (with-mocks list-db-user-ids
+   (println (list-db-user-ids))
+   (println (mock-calls db-list-ids)))
+ (eval:error test-connection)]
+
+The @racket[#:opaque] clause can define multiple opaque values at once by surrounding them
+in parentheses. See @racket[define/mock]'s documentation in @secref{mock-reference} for
+details.
