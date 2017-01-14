@@ -52,6 +52,11 @@ module+ test
   [current-mock-calls-proc current-mock-calls]
   [current-mock-num-calls-proc current-mock-num-calls])
 
+(module+ test
+  (test-exn "Mock reflection params should only be callable inside behavior"
+            #rx"current-mock-name: can't be called outside mock behavior"
+            current-mock-name))
+
 (define call-mock-behavior
   (make-keyword-procedure
    (λ (kws kw-vs a-mock . vs)
@@ -109,8 +114,6 @@ module+ test
    (~a (mock #:name 'foo)) "#<procedure:mock:foo>")
   (test-equal? "Anonymous mocks should print like a procedure named mock"
                (~a (mock)) "#<procedure:mock>")
-  (test-exn "The current mock name shouldn't be available outside behaviors"
-            exn:fail? current-mock-name)
   (define return-mock-name (thunk* (current-mock-name)))
   (test-equal?
    "The current mock name should be available to behaviors"
@@ -125,19 +128,13 @@ module+ test
    (check-equal? (calls-mock 1 2 3) '())
    (check-equal? (calls-mock #:foo 'bar)
                  (list (mock-call (arguments 1 2 3) (list (list))))))
-  (test-exn
-   "The current mock call history shouldn't be available outside behaviors"
-   exn:fail? current-mock-calls)
   (define return-mock-count (thunk* (current-mock-num-calls)))
   (test-begin
    "The current mock call count should be available to behaviors"
    (define count-mock (mock #:behavior return-mock-count))
    (check-equal? (count-mock 1 2 3) 0)
    (check-equal? (count-mock #:foo 'bar) 1)
-   (check-equal? (count-mock 'a #:b 'c) 2))
-  (test-exn
-   "The current mock call count shouldn't be available outside behaviors"
-   exn:fail? current-mock-num-calls))
+   (check-equal? (count-mock 'a #:b 'c) 2)))
 
 (define mock-num-calls (compose length mock-calls))
 
