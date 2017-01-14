@@ -4,16 +4,17 @@ env:
   global:
     - RACKET_DIR=~/racket
   matrix:
-    - RACKET_VERSION=6.4 RUN_COVER=true
-    - RACKET_VERSION=6.5 RUN_COVER=true
+    - RACKET_VERSION=6.4
+    - RACKET_VERSION=6.5
     - RACKET_VERSION=6.6
+    - RACKET_VERSION=6.7
     - RACKET_VERSION=HEAD
 
 before_install:
   - git clone https://github.com/greghendershott/travis-racket.git ../travis-racket
   - cat ../travis-racket/install-racket.sh | bash
   - export PATH="${RACKET_DIR}/bin:${PATH}"
-  - raco pkg install --auto cover cover-coveralls doc-coverage
+  - raco pkg install --auto cover cover-codecov doc-coverage
 
 install:
   - raco pkg install --auto
@@ -23,4 +24,4 @@ install:
 script:
   - raco test -c mock
   - raco doc-coverage mock mock/rackunit
-  - if [ -n "$RUN_COVER" ]; then raco cover -f coveralls -d $TRAVIS_BUILD_DIR/coverage -c mock; fi
+  - raco cover -f codecov -d $TRAVIS_BUILD_DIR/coverage -c mock
