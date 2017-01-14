@@ -40,17 +40,14 @@ module+ test
   (make-parameter
    (thunk (raise (make-exn:fail message (current-continuation-marks))))))
 
-(define-simple-macro (define-mock-proc-parameter [proc-id id] ...)
-  (begin
-    (begin
-      (define proc-id (make-mock-proc-parameter 'id))
-      (define (id) ((proc-id))))
-    ...))
+(define-simple-macro (define-mock-proc-parameter proc-id:id id:id)
+  (define-values (proc-id id)
+    (values (make-mock-proc-parameter 'id)
+            (lambda () ((proc-id))))))
 
-(define-mock-proc-parameter
-  [current-mock-name-proc current-mock-name]
-  [current-mock-calls-proc current-mock-calls]
-  [current-mock-num-calls-proc current-mock-num-calls])
+(define-mock-proc-parameter current-mock-name-proc current-mock-name)
+(define-mock-proc-parameter current-mock-calls-proc current-mock-calls)
+(define-mock-proc-parameter current-mock-num-calls-proc current-mock-num-calls)
 
 (module+ test
   (test-exn "Mock reflection params should only be callable inside behavior"
