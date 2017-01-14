@@ -1,4 +1,4 @@
-# racket-mock [![Build Status](https://travis-ci.org/jackfirth/racket-mock.svg)](https://travis-ci.org/jackfirth/racket-mock) [![Coverage Status](https://coveralls.io/repos/jackfirth/racket-mock/badge.svg?branch=master&service=github)](https://coveralls.io/github/jackfirth/racket-mock?branch=master) [![Stories in Ready](https://badge.waffle.io/jackfirth/racket-mock.png?label=ready&title=Ready)](https://waffle.io/jackfirth/racket-mock)
+# racket-mock [![Build Status](https://travis-ci.org/jackfirth/racket-mock.svg)](https://travis-ci.org/jackfirth/racket-mock) [![codecov](https://codecov.io/gh/jackfirth/racket-mock/branch/master/graph/badge.svg)](https://codecov.io/gh/jackfirth/racket-mock) [![Stories in Ready](https://badge.waffle.io/jackfirth/racket-mock.png?label=ready&title=Ready)](https://waffle.io/jackfirth/racket-mock)
 Mocks for Racket testing.
 
 ```bash
