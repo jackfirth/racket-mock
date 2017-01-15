@@ -22,17 +22,12 @@ require fancy-app
         rackunit
         syntax/parse/define
         "args.rkt"
+        "util.rkt"
 
 module+ test
   require rackunit
           racket/format
 
-
-(define (box-transform! a-box f)
-  (set-box! a-box (f (unbox a-box))))
-
-(define-syntax-rule (with-values-as-list body ...)
-  (call-with-values (thunk body ...) list))
 
 (define (make-mock-proc-parameter source-name)
   (define message
@@ -67,7 +62,7 @@ module+ test
          (with-values-as-list
           (keyword-apply (current-behavior) kws kw-vs vs))))
      (define args (make-arguments vs (kws+vs->hash kws kw-vs)))
-     (add-call! calls-box (mock-call args results))
+     (box-cons-end! calls-box (mock-call args results))
      (apply values results))))
 
 (define (mock-custom-write a-mock port mode)
@@ -86,9 +81,6 @@ module+ test
   #:omit-define-syntaxes
   #:methods gen:custom-write
   [(define write-proc mock-custom-write)])
-
-(define (add-call! calls-box call)
-  (box-transform! calls-box (append _ (list call))))
 
 (define (mock #:behavior [given-behavior #f] #:name [name #f])
   (define behavior
