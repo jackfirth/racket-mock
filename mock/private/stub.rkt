@@ -13,7 +13,7 @@ require racket/function
 module+ test
   require rackunit
 
-(define-simple-macro (stub h:stub-header ...) (begin h.definition ...))
+(define-simple-macro (stub stubs:stubs) stubs.definitions)
 
 (module+ test
   (stub foo (bar v) ((baz k) #:blah v))

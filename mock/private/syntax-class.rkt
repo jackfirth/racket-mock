@@ -4,6 +4,7 @@ provide definition-header
         mocks-clause
         opaque-clause
         stub-header
+        stubs
         struct-out mock-static-info
         struct-out mocks-syntax-info
 
@@ -97,3 +98,7 @@ require syntax/parse
   (pattern header:definition-header
            #:attr definition
            #'(define header (raise-not-implemented 'header.id))))
+
+(define-splicing-syntax-class stubs
+  (pattern (~seq stubbed:stub-header ...+)
+           #:attr definitions #'(begin stubbed.definition ...)))
