@@ -3,6 +3,8 @@
 provide definition-header
         mocks-clause
         opaque-clause
+        stub-header
+        stubs
         struct-out mock-static-info
         struct-out mocks-syntax-info
 
@@ -12,6 +14,7 @@ require racket/syntax
         for-template racket/base
                      "opaque.rkt"
                      "base.rkt"
+                     "not-implemented.rkt"
 
 require syntax/parse
 
@@ -87,3 +90,15 @@ require syntax/parse
            #'(map mock-static-info
                   (syntax->list #'(id ... id? ...))
                   (syntax->list #'(fresh-id ... fresh-id? ...)))))
+
+(define-syntax-class stub-header
+  (pattern plain-id:id
+           #:attr definition
+           #'(define plain-id (not-implemented-proc 'plain-id)))
+  (pattern header:definition-header
+           #:attr definition
+           #'(define header (raise-not-implemented 'header.id))))
+
+(define-splicing-syntax-class stubs
+  (pattern (~seq stubbed:stub-header ...+)
+           #:attr definitions #'(begin stubbed.definition ...)))

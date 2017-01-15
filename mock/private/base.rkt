@@ -22,17 +22,12 @@ require fancy-app
         rackunit
         syntax/parse/define
         "args.rkt"
+        "util.rkt"
 
 module+ test
   require rackunit
           racket/format
 
-
-(define (box-transform! a-box f)
-  (set-box! a-box (f (unbox a-box))))
-
-(define-syntax-rule (with-values-as-list body ...)
-  (call-with-values (thunk body ...) list))
 
 (define (make-mock-proc-parameter source-name)
   (define message
@@ -40,17 +35,19 @@ module+ test
   (make-parameter
    (thunk (raise (make-exn:fail message (current-continuation-marks))))))
 
-(define-simple-macro (define-mock-proc-parameter [proc-id id] ...)
-  (begin
-    (begin
-      (define proc-id (make-mock-proc-parameter 'id))
-      (define (id) ((proc-id))))
-    ...))
+(define-simple-macro (define-mock-proc-parameter proc-id:id id:id)
+  (define-values (proc-id id)
+    (values (make-mock-proc-parameter 'id)
+            (lambda () ((proc-id))))))
 
-(define-mock-proc-parameter
-  [current-mock-name-proc current-mock-name]
-  [current-mock-calls-proc current-mock-calls]
-  [current-mock-num-calls-proc current-mock-num-calls])
+(define-mock-proc-parameter current-mock-name-proc current-mock-name)
+(define-mock-proc-parameter current-mock-calls-proc current-mock-calls)
+(define-mock-proc-parameter current-mock-num-calls-proc current-mock-num-calls)
+
+(module+ test
+  (test-exn "Mock reflection params should only be callable inside behavior"
+            #rx"current-mock-name: can't be called outside mock behavior"
+            current-mock-name))
 
 (define call-mock-behavior
   (make-keyword-procedure
@@ -65,7 +62,7 @@ module+ test
          (with-values-as-list
           (keyword-apply (current-behavior) kws kw-vs vs))))
      (define args (make-arguments vs (kws+vs->hash kws kw-vs)))
-     (add-call! calls-box (mock-call args results))
+     (box-cons-end! calls-box (mock-call args results))
      (apply values results))))
 
 (define (mock-custom-write a-mock port mode)
@@ -84,9 +81,6 @@ module+ test
   #:omit-define-syntaxes
   #:methods gen:custom-write
   [(define write-proc mock-custom-write)])
-
-(define (add-call! calls-box call)
-  (box-transform! calls-box (append _ (list call))))
 
 (define (mock #:behavior [given-behavior #f] #:name [name #f])
   (define behavior
@@ -109,8 +103,6 @@ module+ test
    (~a (mock #:name 'foo)) "#<procedure:mock:foo>")
   (test-equal? "Anonymous mocks should print like a procedure named mock"
                (~a (mock)) "#<procedure:mock>")
-  (test-exn "The current mock name shouldn't be available outside behaviors"
-            exn:fail? current-mock-name)
   (define return-mock-name (thunk* (current-mock-name)))
   (test-equal?
    "The current mock name should be available to behaviors"
@@ -125,19 +117,13 @@ module+ test
    (check-equal? (calls-mock 1 2 3) '())
    (check-equal? (calls-mock #:foo 'bar)
                  (list (mock-call (arguments 1 2 3) (list (list))))))
-  (test-exn
-   "The current mock call history shouldn't be available outside behaviors"
-   exn:fail? current-mock-calls)
   (define return-mock-count (thunk* (current-mock-num-calls)))
   (test-begin
    "The current mock call count should be available to behaviors"
    (define count-mock (mock #:behavior return-mock-count))
    (check-equal? (count-mock 1 2 3) 0)
    (check-equal? (count-mock #:foo 'bar) 1)
-   (check-equal? (count-mock 'a #:b 'c) 2))
-  (test-exn
-   "The current mock call count shouldn't be available outside behaviors"
-   exn:fail? current-mock-num-calls))
+   (check-equal? (count-mock 'a #:b 'c) 2)))
 
 (define mock-num-calls (compose length mock-calls))
 
