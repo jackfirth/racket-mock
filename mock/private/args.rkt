@@ -122,6 +122,18 @@ module+ test
               (if keyword-msg (arg-part 'keyword keyword-msg) ""))
       first-part))
 
+(module+ test
+  (check-equal? (unexpected-call-message 'foo #:positional #f #:keyword #f)
+                "foo: unexpectedly called")
+  (check-equal? (unexpected-call-message 'foo #:positional "pos" #:keyword #f)
+                "foo: unexpectedly called with arguments\n  positional: pos")
+  (check-equal? (unexpected-call-message 'foo #:positional #f #:keyword "kw")
+                "foo: unexpectedly called with arguments\n  keyword: kw")
+  (check-equal? (unexpected-call-message 'foo #:positional "pos" #:keyword "kw")
+                "foo: unexpectedly called with arguments
+  positional: pos
+  keyword: kw"))
+
 (define (make-raise-unexpected-arguments-exn source-name)
   (make-keyword-procedure
    (λ (kws kw-vs . vs)
