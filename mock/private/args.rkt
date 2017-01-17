@@ -109,18 +109,27 @@ module+ test
          (hash-map kwargs (format "\n   ~a: ~v" _ _))))
 
 (struct exn:fail:unexpected-arguments exn:fail (args) #:transparent)
-(define unexpected-call-message-format
-  "~a: unexpectedly called with arguments\n  positional: ~a\n  keyword: ~a")
+
+(define (unexpected-call-message source-name
+                                 #:positional positional-msg
+                                 #:keyword keyword-msg)
+  (define (arg-part type msg) (format "\n  ~a: ~a" type msg))
+  (define first-part (format "~a: unexpectedly called" source-name))
+  (if (or positional-msg keyword-msg)
+      (format "~a with arguments~a~a"
+              first-part
+              (if positional-msg (arg-part 'positional positional-msg) "")
+              (if keyword-msg (arg-part 'keyword keyword-msg) ""))
+      first-part))
 
 (define (make-raise-unexpected-arguments-exn source-name)
   (make-keyword-procedure
    (λ (kws kw-vs . vs)
      (define kwargs (kws+vs->hash kws kw-vs))
      (define message
-       (format unexpected-call-message-format
-               source-name
-               (format-positional-args-message vs)
-               (format-keyword-args-message kwargs)))
+       (unexpected-call-message source-name
+                                #:positional (format-positional-args-message vs)
+                                #:keyword (format-keyword-args-message kwargs)))
      (raise
       (exn:fail:unexpected-arguments
        message (current-continuation-marks) (make-arguments vs kwargs))))))
