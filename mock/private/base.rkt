@@ -11,6 +11,7 @@ provide
     mock? predicate/c
     mock (->* () (#:name symbol? #:behavior procedure?) mock?)
     mock-reset! (-> mock? void?)
+    mock-reset-all! (->* () #:rest (listof mock?) void?)
     mock-calls (-> mock? (listof mock-call?))
     struct mock-call ([args arguments?] [results list?])
     mock-called-with? (-> mock? arguments? boolean?)
@@ -177,3 +178,6 @@ module+ test
    (λ (kws kw-vs . vs)
      (define proc (make-raise-unexpected-arguments-exn (or (current-mock-name) 'mock)))
      (keyword-apply proc kws kw-vs vs))))
+
+(define (mock-reset-all! . mocks)
+  (for-each mock-reset! mocks))

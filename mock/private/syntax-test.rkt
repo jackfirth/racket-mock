@@ -108,3 +108,13 @@ require racket/function
   (check-exn #rx"bar-normal not bound with define/mock"
              (thunk
               (convert-compile-time-error (with-mocks bar-normal (void))))))
+
+(test-case "Should raise a syntax error when with-mocks is nested"
+  (define/mock (bar1) #:mock foo (foo))
+  (define/mock (bar2) #:mock foo (foo))
+  (check-equal? (bar1) "real")
+  (check-equal? (bar2) "real")
+  (check-exn #rx"nested use of with-mocks not allowed"
+             (thunk
+              (convert-compile-time-error
+               (with-mocks bar1 (with-mocks bar2 (void)))))))

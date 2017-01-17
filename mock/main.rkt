@@ -2,7 +2,8 @@
 except-in "private/args.rkt"
   kws+vs->hash
   make-raise-unexpected-arguments-exn
-"private/base.rkt"
+except-in "private/base.rkt"
+  mock-reset-all!
 "private/opaque.rkt"
 "private/syntax.rkt"
 "private/stub.rkt"
