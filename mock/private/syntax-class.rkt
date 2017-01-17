@@ -134,4 +134,5 @@ require syntax/parse
            #:with ([mock-id mock-impl-id] ...) (mock-bindings mocks)
            #:attr [opaque-binding 1] (syntax->list #'(opaque-binding-stx ...))
            #:attr [mock-binding 1]
-           (syntax->list #'([mock-id mock-impl-id] ...))))
+           (syntax->list #'([mock-id mock-impl-id] ...))
+           #:attr reset-mocks-expr #'(mock-reset-all! mock-id ...)))

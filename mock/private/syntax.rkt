@@ -38,9 +38,9 @@ module+ mock-test-setup
     (define-static header.id header.fresh-id
       (mocks-syntax-info #'header.fresh-id-secondary opaque.static-info mocks.static-info))))
 
-(define-syntax-parser with-mocks
-  [(_ proc:id/mock body:expr ...)
-   (with-syntax* ([([mock-id mock-impl-id] ...) #'(proc.mock-binding ...)])
-     #`(let ([proc proc.proc-id] proc.opaque-binding ... proc.mock-binding ...)
-         body ...
-         (mock-reset-all! mock-id ...)))])
+(define-simple-macro (with-mocks proc:id/mock body:expr ...)
+  (let ([proc proc.proc-id]
+        proc.opaque-binding ...
+        proc.mock-binding ...)
+    body ...
+    proc.reset-mocks-expr))
