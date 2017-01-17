@@ -4,6 +4,7 @@ provide define/mock
         with-mocks
 
 require racket/splicing
+        racket/stxparam
         syntax/parse/define
         "base.rkt"
         "opaque.rkt"
@@ -35,9 +36,18 @@ module+ mock-test-setup
     (define-static header.id header.fresh-id
       (mocks-syntax-info #'header.fresh-id-secondary opaque.static-info mocks.static-info))))
 
-(define-simple-macro (with-mocks proc:id/mock body:expr ...)
+(define-simple-macro (with-mocks/impl proc:id/mock body:expr ...)
   (let ([proc proc.proc-id]
         proc.opaque-binding ...
         proc.mock-binding ...)
     body ...
     proc.reset-mocks-expr))
+
+(define-for-syntax (with-mocks/nested stx)
+  (raise-syntax-error #f "nested use of with-mocks not allowed" stx))
+
+(define-syntax-parameter with-mocks
+  (syntax-parser
+    [(_ proc:id/mock body:expr ...)
+     #'(syntax-parameterize ([with-mocks with-mocks/nested])
+         (with-mocks/impl proc body ...))]))
