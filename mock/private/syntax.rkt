@@ -17,9 +17,6 @@ module+ mock-test-setup
   require rackunit
           "args.rkt"
 
-(define (mock-reset-all! . mocks)
-  (for-each mock-reset! mocks))
-
 (define-simple-macro (define-static id base-id static-expr)
   (define-syntax id (static-val-transformer #'base-id static-expr)))
 
