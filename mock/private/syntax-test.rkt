@@ -2,6 +2,7 @@
 
 require racket/function
         rackunit
+        syntax/macro-testing
         "args.rkt"
         "base.rkt"
         "syntax.rkt"
@@ -99,3 +100,11 @@ require racket/function
     (check-pred left? left)
     (check-pred right? right)
     (check-equal? (bar-opaque-multi) (cons left right))))
+
+(test-case "Should raise a syntax error when used with a normal procedure"
+  (define (bar-normal)
+    (foo))
+  (check-equal? (bar-normal) "real")
+  (check-exn #rx"bar-normal not bound with define/mock"
+             (thunk
+              (convert-compile-time-error (with-mocks bar-normal (void))))))
