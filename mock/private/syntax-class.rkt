@@ -1,15 +1,20 @@
 #lang sweet-exp racket/base
 
 provide definition-header
+        id/mock
         mocks-clause
         opaque-clause
+        static-val-transformer
         stub-header
         stubs
         struct-out mock-static-info
         struct-out mocks-syntax-info
 
-require racket/syntax
+require racket/function
+        racket/match
+        racket/syntax
         syntax/stx
+        syntax/parse/define
         "syntax-util.rkt"
         for-template racket/base
                      "opaque.rkt"
@@ -17,9 +22,6 @@ require racket/syntax
                      "not-implemented.rkt"
 
 require syntax/parse
-
-(struct mock-static-info (id bound-id) #:transparent)
-(struct mocks-syntax-info (proc-id opaques mocks) #:transparent)
 
 (define-syntax-class definition-header
   (pattern (~or root-id:id
@@ -102,3 +104,34 @@ require syntax/parse
 (define-splicing-syntax-class stubs
   (pattern (~seq stubbed:stub-header ...+)
            #:attr definitions #'(begin stubbed.definition ...)))
+
+(struct mock-static-info (id bound-id) #:transparent)
+(struct mocks-syntax-info (proc-id opaques mocks) #:transparent)
+
+(define (mock-bindings mock-static-infos)
+  (map (match-lambda [(mock-static-info mock-id mock-impl-id)
+                      (list (syntax-local-introduce mock-id) mock-impl-id)])
+       mock-static-infos))
+
+(struct static-val-transformer (id value)
+  #:property prop:rename-transformer (struct-field-index id))
+
+(define (static-val static-trans-stx)
+  (define-values (trans _)
+    (syntax-local-value/immediate static-trans-stx (thunk (values #f #f))))
+  (and trans (static-val-transformer-value trans)))
+
+(define-syntax-class id/mock
+  #:description "define/mock identifier"
+  (pattern id:id
+           #:do [(define static (static-val #'id))]
+           #:fail-unless (mocks-syntax-info? static)
+           (format "identifier ~a not bound with define/mock" (syntax-e #'id))
+           #:do [(match-define (mocks-syntax-info proc-id opaques mocks)
+                   static)]
+           #:attr proc-id proc-id
+           #:with (opaque-binding-stx ...) (mock-bindings opaques)
+           #:with ([mock-id mock-impl-id] ...) (mock-bindings mocks)
+           #:attr [opaque-binding 1] (syntax->list #'(opaque-binding-stx ...))
+           #:attr [mock-binding 1]
+           (syntax->list #'([mock-id mock-impl-id] ...))))
