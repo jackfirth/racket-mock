@@ -5,6 +5,10 @@ require racket/contract/base
 provide
   contract-out
     const/kw (-> any/c procedure?)
+    const-raise (-> any/c procedure?)
+    const-raise-exn
+      (->* () (#:message string? #:constructor exn-constructor/c) procedure?)
+    const-series (->* () (#:repeat? boolean?) #:rest list? procedure?)
     void/kw (unconstrained-domain-> void?)
 
 require racket/function
@@ -13,6 +17,8 @@ require racket/function
 module+ test
   require rackunit
 
+
+(define exn-constructor/c (-> string? continuation-mark-set? any/c))
 
 (define (const/kw v)
   (make-keyword-procedure (const v)))
