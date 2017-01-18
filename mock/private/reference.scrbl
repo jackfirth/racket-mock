@@ -8,6 +8,7 @@ For a gentler introduction and use cases, see @secref{mock-guide}.
 @table-of-contents[]
 
 @include-section["base.scrbl"]
+@include-section["function.scrbl"]
 @include-section["args.scrbl"]
 @include-section["opaque.scrbl"]
 @include-section["syntax.scrbl"]
