@@ -7,20 +7,23 @@
  Like @racket[const], but the returned procedure accepts keyword arguments.
  @(mock-examples
    ((const/kw 'a) 1)
-   ((const/kw 'a) #:foo 2))}
+   ((const/kw 'a) #:foo 2))
+ @history[#:added "1.5"]}
 
 @defthing[void/kw (unconstrained-domain-> void?)]{
  Like @racket[void], but accepts keyword arguments.
  @(mock-examples
    (void/kw 1)
-   (void/kw #:foo 2))}
+   (void/kw #:foo 2))
+ @history[#:added "1.5"]}
 
 @defproc[(const-raise [v any/c]) procedure?]{
  Like @racket[const/kw], but instead of returning @racket[v] the returned
  procedure always @racket[raise]s @racket[v] whenever it's called.
  @(mock-examples
    (eval:error ((const-raise 'a) 1))
-   (eval:error ((const-raise 'a) #:foo 2)))}
+   (eval:error ((const-raise 'a) #:foo 2)))
+ @history[#:added "1.5"]}
 
 @defproc[(const-raise-exn
           [#:message msg string? "failure"]
@@ -34,7 +37,8 @@
    (eval:error ((const-raise-exn) 1))
    (eval:error ((const-raise-exn "some other failure") #:foo 2))
    (struct exn:fail:custom exn:fail () #:transparent)
-   (eval:error ((const-raise-exn #:constructor exn:fail:custom) #:bar 3)))}
+   (eval:error ((const-raise-exn #:constructor exn:fail:custom) #:bar 3)))
+ @history[#:added "1.5"]}
 
 @defproc[(const-series [v any/c] ... [#:reset? reset? boolean? #f]) procedure?]{
  Returns a procedure that ignores positional and keyword arguments and returns
@@ -50,4 +54,5 @@
    (define ab-proc (const-series 'a 'b #:repeat? #t))
    (eval:check (ab-proc) 'a)
    (eval:check (ab-proc) 'b)
-   (eval:check (ab-proc) 'a))}
+   (eval:check (ab-proc) 'a))
+ @history[#:added "1.5"]}
