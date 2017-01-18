@@ -4,6 +4,7 @@ except-in "private/args.rkt"
   make-raise-unexpected-arguments-exn
 except-in "private/base.rkt"
   mock-reset-all!
+"private/function.rkt"
 "private/opaque.rkt"
 "private/syntax.rkt"
 "private/stub.rkt"
