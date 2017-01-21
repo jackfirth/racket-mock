@@ -5,7 +5,7 @@
 (provide
  (contract-out
   [mock-call (->* ()
-                  (#:name symbol? #:args arguments? #:results list?)
+                  (#:name (or/c symbol? #f) #:args arguments? #:results list?)
                   mock-call?)]
   [mock-call? predicate/c]
   [mock-call-args (-> mock-call? arguments?)]
