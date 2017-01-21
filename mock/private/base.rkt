@@ -99,8 +99,11 @@ module+ test
     (check-equal? (m 0) "0")
     (check-equal? (m 0 #:width 3 #:align 'left) "0  ")
     (check-equal? (mock-calls m)
-                  (list (mock-call #:args (arguments 0) #:results '("0"))
-                        (mock-call #:args (arguments 0 #:width 3 #:align 'left)
+                  (list (mock-call #:name 'test-mock-for-testing
+                                   #:args (arguments 0)
+                                   #:results '("0"))
+                        (mock-call #:name 'test-mock-for-testing
+                                   #:args (arguments 0 #:width 3 #:align 'left)
                                    #:results '("0  ")))))
   (test-equal?
    "Mocks should print like named procedures, but identify themselves as mocks"
