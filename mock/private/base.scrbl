@@ -123,7 +123,7 @@
 
 @deftogether[
  (@defproc[(mock-call [#:args args arguments? (arguments)]
-                      [#:results results list?])
+                      [#:results results list? (list)])
            mock-call?]
    @defproc[(mock-call? [v any/c]) boolean?]
    @defproc[(mock-call-args [call mock-call?]) arguments?]
