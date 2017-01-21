@@ -28,16 +28,17 @@
 @defproc[(const-raise-exn
           [#:message msg string? "failure"]
           [#:constructor ctor
-           (-> string? continuation-mark-set? any/c) make-exn:fail?])
+           (-> string? continuation-mark-set? any/c) make-exn:fail])
          procedure?]{
  Like @racket[const-raise], but designed for raising exceptions. More precisely,
  the returned procedure raises the result of
  @racket[(ctor msg (current-continuation-marks))] whenever it's called.
  @(mock-examples
    (eval:error ((const-raise-exn) 1))
-   (eval:error ((const-raise-exn "some other failure") #:foo 2))
-   (struct exn:fail:custom exn:fail () #:transparent)
-   (eval:error ((const-raise-exn #:constructor exn:fail:custom) #:bar 3)))
+   (eval:error ((const-raise-exn #:message "some other failure") #:foo 2))
+   (define (exn/custom-message msg marks)
+     (make-exn:fail (format "custom: ~a" msg) marks))
+   (eval:error ((const-raise-exn #:constructor exn/custom-message) #:bar 3)))
  @history[#:added "1.5"]}
 
 @defproc[(const-series [v any/c] ... [#:reset? reset? boolean? #f]) procedure?]{
