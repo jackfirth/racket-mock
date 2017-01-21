@@ -11,9 +11,15 @@
 
 (require "args.rkt")
 
+(module+ test
+  (require rackunit))
+
 
 (struct mock-call (args results)
   #:transparent #:omit-define-syntaxes #:constructor-name make-mock-call)
 
 (define (mock-call #:args [args (arguments)] #:results [results (list)])
   (make-mock-call args results))
+
+(module+ test
+  (check-equal? (mock-call) (mock-call #:args (arguments) #:results (list))))
