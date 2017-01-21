@@ -122,19 +122,22 @@
  (mock-calls num-mock)]}
 
 @deftogether[
- (@defproc[(mock-call [#:args args arguments? (arguments)]
+ (@defproc[(mock-call [#:name name (or/c symbol? #f) #f]
+                      [#:args args arguments? (arguments)]
                       [#:results results list? (list)])
            mock-call?]
    @defproc[(mock-call? [v any/c]) boolean?]
    @defproc[(mock-call-args [call mock-call?]) arguments?]
    @defproc[(mock-call-results [call mock-call?]) list?])]{
  Constructor, predicate, and accessors of a structure containing the
- @args-tech{arguments} and result values of a single call to a @mock-tech{mock}.
+ @args-tech{arguments} and result values of a single call to a @mock-tech{mock}
+ with name @racket[name].
  @mock-examples[
- (mock-call #:args (arguments 1 2 #:foo 'bar)
+ (mock-call #:name 'magnificent-mock
+            #:args (arguments 1 2 #:foo 'bar)
             #:results (list 'value 'another-value))]
- @history[#:changed "2.0"
-          "Changed from a plain struct to a keyword-based constructor."]}
+ @history[#:changed "2.0" @elem{Changed from a plain struct to a keyword-based
+            constructor and added a name field.}]}
 
 @defproc[(mock-calls [m mock?]) (listof mock-call?)]{
  Returns a list of all the calls made so far with @racket[m] in order, as
