@@ -10,7 +10,7 @@
  (mock? void)]}
 
 @defproc[(mock [#:behavior behavior-proc procedure? #f]
-               [#:name name symbol? 'mock])
+               [#:name name symbol? #f])
          mock?]{
  Returns a @mock-tech{mock} that records arguments its called with and results
  it returns. When called as a procedure, the mock consults its current
@@ -29,6 +29,13 @@
  (mock? quotient/remainder-mock)
  (define uncallable-mock (mock #:name 'uncallable-mock))
  (eval:error (uncallable-mock 1 2 3 #:foo 'bar #:bar "blah"))]}
+
+@defproc[(mock-name [a-mock mock?]) (or/c symbol? #f)]{
+ Returns the name of @racket[a-mock] if present.
+ @mock-examples[
+ (mock-name (mock #:name 'foo))
+ (mock-name (mock))]
+ @history[#:added "2.0"]}
 
 @define-persistent-mock-examples[mock-name-examples]
 @defproc[(current-mock-name) (or/c symbol? #f)]{

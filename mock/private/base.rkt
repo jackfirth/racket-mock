@@ -10,6 +10,7 @@ provide
     current-mock-num-calls (-> exact-nonnegative-integer?)
     mock? predicate/c
     mock (->* () (#:name symbol? #:behavior procedure?) mock?)
+    mock-name (-> mock? (or/c symbol? #f))
     mock-reset! (-> mock? void?)
     mock-reset-all! (->* () #:rest (listof mock?) void?)
     mock-calls (-> mock? (listof mock-call?))
@@ -63,7 +64,10 @@ module+ test
          (with-values-as-list
           (keyword-apply (current-behavior) kws kw-vs vs))))
      (define args (make-arguments vs (kws+vs->hash kws kw-vs)))
-     (box-cons-end! calls-box (mock-call #:args args #:results results))
+     (box-cons-end! calls-box
+                    (mock-call #:name (mock-name a-mock)
+                               #:args args
+                               #:results results))
      (apply values results))))
 
 (define (mock-custom-write a-mock port mode)
@@ -91,7 +95,7 @@ module+ test
 
 (module+ test
   (test-case "Mocks should record calls made with them"
-    (define m (mock #:behavior ~a))
+    (define m (mock #:behavior ~a #:name 'test-mock-for-testing))
     (check-equal? (m 0) "0")
     (check-equal? (m 0 #:width 3 #:align 'left) "0  ")
     (check-equal? (mock-calls m)
