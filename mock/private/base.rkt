@@ -13,7 +13,6 @@ provide
     mock-reset! (-> mock? void?)
     mock-reset-all! (->* () #:rest (listof mock?) void?)
     mock-calls (-> mock? (listof mock-call?))
-    struct mock-call ([args arguments?] [results list?])
     mock-called-with? (-> mock? arguments? boolean?)
     mock-num-calls (-> mock? exact-nonnegative-integer?)
 
@@ -23,6 +22,7 @@ require fancy-app
         rackunit
         syntax/parse/define
         "args.rkt"
+        "history.rkt"
         "util.rkt"
 
 module+ test
@@ -63,7 +63,7 @@ module+ test
          (with-values-as-list
           (keyword-apply (current-behavior) kws kw-vs vs))))
      (define args (make-arguments vs (kws+vs->hash kws kw-vs)))
-     (box-cons-end! calls-box (mock-call args results))
+     (box-cons-end! calls-box (mock-call #:args args #:results results))
      (apply values results))))
 
 (define (mock-custom-write a-mock port mode)
@@ -74,7 +74,6 @@ module+ test
     (write-string (symbol->string name) port))
   (write-string ">" port))
 
-(struct mock-call (args results) #:transparent)
 (struct mock (name behavior calls-box)
   #:property prop:procedure call-mock-behavior
   #:property prop:object-name (struct-field-index name)
@@ -96,9 +95,9 @@ module+ test
     (check-equal? (m 0) "0")
     (check-equal? (m 0 #:width 3 #:align 'left) "0  ")
     (check-equal? (mock-calls m)
-                  (list (mock-call (arguments 0) '("0"))
-                        (mock-call (arguments 0 #:width 3 #:align 'left)
-                                   '("0  ")))))
+                  (list (mock-call #:args (arguments 0) #:results '("0"))
+                        (mock-call #:args (arguments 0 #:width 3 #:align 'left)
+                                   #:results '("0  ")))))
   (test-equal?
    "Mocks should print like named procedures, but identify themselves as mocks"
    (~a (mock #:name 'foo)) "#<procedure:mock:foo>")
@@ -117,7 +116,8 @@ module+ test
    (define calls-mock (mock #:behavior return-mock-calls))  
    (check-equal? (calls-mock 1 2 3) '())
    (check-equal? (calls-mock #:foo 'bar)
-                 (list (mock-call (arguments 1 2 3) (list (list))))))
+                 (list (mock-call #:args (arguments 1 2 3)
+                                  #:results (list (list))))))
   (define return-mock-count (thunk* (current-mock-num-calls)))
   (test-begin
    "The current mock call count should be available to behaviors"
