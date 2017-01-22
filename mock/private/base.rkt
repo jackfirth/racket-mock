@@ -9,7 +9,11 @@ provide
     current-mock-calls (-> (listof mock-call?))
     current-mock-num-calls (-> exact-nonnegative-integer?)
     mock? predicate/c
-    mock (->* () (#:name symbol? #:behavior procedure?) mock?)
+    mock (->* ()
+              (#:name symbol?
+               #:behavior procedure?
+               #:external-histories (listof call-history?))
+              mock?)
     mock-name (-> mock? (or/c symbol? #f))
     mock-reset! (-> mock? void?)
     mock-reset-all! (->* () #:rest (listof mock?) void?)
