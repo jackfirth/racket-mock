@@ -4,12 +4,22 @@
 
 (provide
  (contract-out
-  [mock-call (->* ()
-                  (#:name (or/c symbol? #f) #:args arguments? #:results list?)
-                  mock-call?)]
+  [mock-call
+   (->* () (#:name (or/c symbol? #f) #:args arguments? #:results list?)
+        mock-call?)]
   [mock-call? predicate/c]
   [mock-call-args (-> mock-call? arguments?)]
-  [mock-call-results (-> mock-call? list?)]))
+  [mock-call-results (-> mock-call? list?)]
+  [call-history (-> call-history?)]
+  [call-history? predicate/c]
+  [call-history-record! (-> call-history? mock-call? void?)]
+  [call-history-erase! (-> call-history? void?)]
+  [call-history-calls (-> call-history? (listof mock-call?))]
+  [call-history-calls/name
+   (-> call-history? (or/c symbol? #f) (listof mock-call?))]
+  [call-history-count (-> call-history? exact-nonnegative-integer?)]
+  [call-history-count/name
+   (-> call-history? (or/c symbol? #f) exact-nonnegative-integer?)]))
 
 (require "args.rkt"
          "util.rkt")
@@ -30,38 +40,41 @@
   (check-equal? (mock-call)
                 (mock-call #:name #f #:args (arguments) #:results (list))))
 
-(struct mock-history (calls-box)
-  #:transparent #:omit-define-syntaxes #:constructor-name make-mock-history)
+(struct call-history (calls-box)
+  #:transparent #:omit-define-syntaxes #:constructor-name make-call-history)
 
-(define (mock-history) (make-mock-history (box '())))
+(define (call-history) (make-call-history (box '())))
 
-(define (mock-history-record-call! history call)
-  (box-cons-end! (mock-history-calls-box history) call))
+(define (call-history-record! history call)
+  (box-cons-end! (call-history-calls-box history) call))
 
-(define (mock-history-calls history)
-  (unbox (mock-history-calls-box history)))
+(define (call-history-erase! history)
+  (set-box! (call-history-calls-box history) '()))
 
-(define (mock-history-calls/name history name)
+(define (call-history-calls history)
+  (unbox (call-history-calls-box history)))
+
+(define (call-history-calls/name history name)
   (filter (λ (call) (equal? (mock-call-name call) name))
-          (mock-history-calls history)))
+          (call-history-calls history)))
 
-(define (mock-history-num-calls history) (length (mock-history-calls history)))
-(define (mock-history-num-calls/name history name)
-  (length (mock-history-calls/name history name)))
+(define (call-history-count history) (length (call-history-calls history)))
+(define (call-history-count/name history name)
+  (length (call-history-calls/name history name)))
 
 (module+ test
   (define (foo-call n)
     (mock-call #:name 'foo #:args (arguments 'a 'b 'c) #:results (list n)))
   (define (bar-call n)
     (mock-call #:name 'bar #:args (arguments 'a 'b 'c) #:results (list n)))
-  (define test-history (mock-history))
-  (check-pred mock-history? test-history)
-  (check-pred void? (mock-history-record-call! test-history (foo-call 1)))
-  (check-pred void? (mock-history-record-call! test-history (bar-call 1)))
-  (check-pred void? (mock-history-record-call! test-history (foo-call 2)))
-  (check-equal? (mock-history-calls test-history)
+  (define test-history (call-history))
+  (check-pred call-history? test-history)
+  (check-pred void? (call-history-record! test-history (foo-call 1)))
+  (check-pred void? (call-history-record! test-history (bar-call 1)))
+  (check-pred void? (call-history-record! test-history (foo-call 2)))
+  (check-equal? (call-history-calls test-history)
                 (list (foo-call 1) (bar-call 1) (foo-call 2)))
-  (check-equal? (mock-history-calls/name test-history 'foo)
+  (check-equal? (call-history-calls/name test-history 'foo)
                 (list (foo-call 1) (foo-call 2)))
-  (check-equal? (mock-history-num-calls test-history) 3)
-  (check-equal? (mock-history-num-calls/name test-history 'bar) 1))
+  (check-equal? (call-history-count test-history) 3)
+  (check-equal? (call-history-count/name test-history 'bar) 1))

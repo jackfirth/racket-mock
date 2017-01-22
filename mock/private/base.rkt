@@ -54,20 +54,19 @@ module+ test
 (define call-mock-behavior
   (make-keyword-procedure
    (λ (kws kw-vs a-mock . vs)
+     (define name (mock-name a-mock))
      (define current-behavior (mock-behavior a-mock))
-     (define calls-box (mock-calls-box a-mock))
-     (define calls (unbox calls-box))
+     (define history (mock-history a-mock))
+     (define calls (call-history-calls/name history name))
      (define results
-       (parameterize ([current-mock-name-proc (const (mock-name a-mock))]
+       (parameterize ([current-mock-name-proc (const name)]
                       [current-mock-calls-proc (const calls)]
                       [current-mock-num-calls-proc (const (length calls))])
          (with-values-as-list
           (keyword-apply (current-behavior) kws kw-vs vs))))
      (define args (make-arguments vs (kws+vs->hash kws kw-vs)))
-     (box-cons-end! calls-box
-                    (mock-call #:name (mock-name a-mock)
-                               #:args args
-                               #:results results))
+     (define call (mock-call #:name name #:args args #:results results))
+     (call-history-record! history call)
      (apply values results))))
 
 (define (mock-custom-write a-mock port mode)
@@ -78,7 +77,7 @@ module+ test
     (write-string (symbol->string name) port))
   (write-string ">" port))
 
-(struct mock (name behavior calls-box)
+(struct mock (name behavior history)
   #:property prop:procedure call-mock-behavior
   #:property prop:object-name (struct-field-index name)
   #:constructor-name make-mock
@@ -89,9 +88,10 @@ module+ test
 (define (mock #:behavior [given-behavior #f] #:name [name #f])
   (define behavior
     (or given-behavior raise-unexpected-mock-call))
-  (make-mock name (make-parameter behavior) (box '())))
+  (make-mock name (make-parameter behavior) (call-history)))
 
-(define mock-calls (compose unbox mock-calls-box))
+(define (mock-calls a-mock)
+  (call-history-calls (mock-history a-mock)))
 
 (module+ test
   (test-case "Mocks should record calls made with them"
@@ -160,7 +160,7 @@ module+ test
                (thunk ((mock) 10 #:foo 'bar)))))
 
 (define (mock-reset! a-mock)
-  (set-box! (mock-calls-box a-mock) '()))
+  (call-history-erase! (mock-history a-mock)))
 
 (module+ test
   (test-case "Resetting a mock should erase its call history"
