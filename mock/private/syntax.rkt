@@ -37,11 +37,7 @@ module+ mock-test-setup
       (mocks-syntax-info #'header.fresh-id-secondary opaque.static-info mocks.static-info))))
 
 (define-simple-macro (with-mocks/impl proc:id/mock body:expr ...)
-  (let ([proc proc.proc-id]
-        proc.opaque-binding ...
-        proc.mock-binding ...)
-    body ...
-    proc.reset-mocks-expr))
+  (let (proc.binding ...) body ... proc.reset-expr))
 
 (define-for-syntax (with-mocks/nested stx)
   (raise-syntax-error #f "nested use of with-mocks not allowed" stx))

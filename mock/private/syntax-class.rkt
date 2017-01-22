@@ -129,10 +129,12 @@ require syntax/parse
            (format "identifier ~a not bound with define/mock" (syntax-e #'id))
            #:do [(match-define (mocks-syntax-info proc-id opaques mocks)
                    static)]
-           #:attr proc-id proc-id
+           #:with proc-id proc-id
            #:with (opaque-binding-stx ...) (mock-bindings opaques)
            #:with ([mock-id mock-impl-id] ...) (mock-bindings mocks)
-           #:attr [opaque-binding 1] (syntax->list #'(opaque-binding-stx ...))
-           #:attr [mock-binding 1]
+           #:with (opaque-binding ...) (syntax->list #'(opaque-binding-stx ...))
+           #:with (mock-binding ...)
            (syntax->list #'([mock-id mock-impl-id] ...))
-           #:attr reset-mocks-expr #'(mock-reset-all! mock-id ...)))
+           #:attr reset-expr #'(mock-reset-all! mock-id ...)
+           #:attr [binding 1]
+           (syntax->list #'([id proc-id] opaque-binding ... mock-binding ...))))
