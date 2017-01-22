@@ -42,7 +42,7 @@
    (m1 'foo)
    (m2 'bar)
    (m1 'baz)
-   (call-history h))}
+   (call-history-calls h))}
 
 @defproc[(mock-name [a-mock mock?]) (or/c symbol? #f)]{
  Returns the name of @racket[a-mock] if present.
