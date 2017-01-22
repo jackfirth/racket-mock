@@ -57,7 +57,7 @@ module+ test
      (define name (mock-name a-mock))
      (define current-behavior (mock-behavior a-mock))
      (define history (mock-history a-mock))
-     (define calls (call-history-calls/name history name))
+     (define calls (call-history-calls history))
      (define results
        (parameterize ([current-mock-name-proc (const name)]
                       [current-mock-calls-proc (const calls)]
