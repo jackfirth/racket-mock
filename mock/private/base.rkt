@@ -67,6 +67,8 @@ module+ test
      (define args (make-arguments vs (kws+vs->hash kws kw-vs)))
      (define call (mock-call #:name name #:args args #:results results))
      (call-history-record! history call)
+     (for ([external-history (in-list (mock-external-histories a-mock))])
+       (call-history-record! external-history call))
      (apply values results))))
 
 (define (mock-custom-write a-mock port mode)
@@ -77,7 +79,7 @@ module+ test
     (write-string (symbol->string name) port))
   (write-string ">" port))
 
-(struct mock (name behavior history)
+(struct mock (name behavior history external-histories)
   #:property prop:procedure call-mock-behavior
   #:property prop:object-name (struct-field-index name)
   #:constructor-name make-mock
@@ -85,10 +87,12 @@ module+ test
   #:methods gen:custom-write
   [(define write-proc mock-custom-write)])
 
-(define (mock #:behavior [given-behavior #f] #:name [name #f])
+(define (mock #:behavior [given-behavior #f]
+              #:name [name #f]
+              #:external-histories [external-histories (list)])
   (define behavior
     (or given-behavior raise-unexpected-mock-call))
-  (make-mock name (make-parameter behavior) (call-history)))
+  (make-mock name (make-parameter behavior) (call-history) external-histories))
 
 (define (mock-calls a-mock)
   (call-history-calls (mock-history a-mock)))
@@ -105,6 +109,19 @@ module+ test
                         (mock-call #:name 'test-mock-for-testing
                                    #:args (arguments 0 #:width 3 #:align 'left)
                                    #:results '("0  ")))))
+  (test-case "Mocks should record calls in external histories"
+    (define h (call-history))
+    (define m1 (mock #:behavior void #:name 'm1 #:external-histories (list h)))
+    (define m2 (mock #:behavior void #:name 'm2 #:external-histories (list h)))
+    (m1 'foo)
+    (m2 'bar)
+    (m1 'baz)
+    (define expected-calls
+      (list
+       (mock-call #:name 'm1 #:args (arguments 'foo) #:results (list (void)))
+       (mock-call #:name 'm2 #:args (arguments 'bar) #:results (list (void)))
+       (mock-call #:name 'm1 #:args (arguments 'baz) #:results (list (void)))))
+    (check-equal? (call-history-calls h) expected-calls))
   (test-equal?
    "Mocks should print like named procedures, but identify themselves as mocks"
    (~a (mock #:name 'foo)) "#<procedure:mock:foo>")
@@ -168,7 +185,13 @@ module+ test
     (m 'foo)
     (check-equal? (mock-num-calls m) 1)
     (mock-reset! m)
-    (check-equal? (mock-num-calls m) 0)))
+    (check-equal? (mock-num-calls m) 0))
+  (test-case "Resetting a mock should not erase its external histories"
+    (define h (call-history))
+    (define m (mock #:behavior void #:external-histories (list h)))
+    (m 'foo)
+    (mock-reset! m)
+    (check-equal? (call-history-count h) 1)))
 
 (define-simple-macro (with-mock-behavior ([mock:expr new-behavior:expr] ...) body ...)
   (parameterize ([(mock-behavior mock) new-behavior] ...) body ...))
