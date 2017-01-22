@@ -9,8 +9,6 @@ require racket/splicing
         "base.rkt"
         "opaque.rkt"
         for-syntax racket/base
-                   racket/match
-                   racket/syntax
                    syntax/parse
                    "syntax-class.rkt"
 
@@ -18,23 +16,13 @@ module+ mock-test-setup
   require rackunit
           "args.rkt"
 
-(define-simple-macro (define-static id base-id static-expr)
-  (define-syntax id (static-val-transformer #'base-id static-expr)))
-
 (define-simple-macro
-  (define/mock header:definition-header
-    opaque:opaque-clause
-    mocks:mocks-clause
-    body:expr ...+)
+  (define/mock header:definition-header/mock body:expr ...+)
   (begin
-    (define header.fresh body ...)
-    opaque.definitions
-    (splicing-let opaque.bindings
-      mocks.definitions)
-    (splicing-let mocks.bindings
-      (define header.fresh-secondary body ...))
-    (define-static header.id header.fresh-id
-      (mocks-syntax-info #'header.fresh-id-secondary opaque.static-info mocks.static-info))))
+    (define header.header/plain body ...)
+    header.definitions
+    (splicing-let header.override-bindings (define header.header/mock body ...))
+    header.static-definition))
 
 (define-simple-macro (with-mocks/impl proc:id/mock body:expr ...)
   (let (proc.binding ...) body ... proc.reset-expr))

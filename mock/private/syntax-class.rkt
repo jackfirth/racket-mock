@@ -1,27 +1,23 @@
 #lang sweet-exp racket/base
 
-provide definition-header
+provide definition-header/mock
         id/mock
-        mocks-clause
-        opaque-clause
-        static-val-transformer
         stub-header
         stubs
-        struct-out mock-static-info
-        struct-out mocks-syntax-info
 
 require racket/function
         racket/match
         racket/syntax
         syntax/stx
-        syntax/parse/define
         "syntax-util.rkt"
         for-template racket/base
+                     racket/splicing
                      "opaque.rkt"
                      "base.rkt"
                      "not-implemented.rkt"
 
 require syntax/parse
+
 
 (define-syntax-class definition-header
   (pattern (~or root-id:id
@@ -92,6 +88,32 @@ require syntax/parse
            #'(map mock-static-info
                   (syntax->list #'(id ... id? ...))
                   (syntax->list #'(fresh-id ... fresh-id? ...)))))
+
+(define-splicing-syntax-class define/mock-options
+  #:attributes (definitions override-bindings opaques-info mocks-info)
+  (pattern (~seq opaque:opaque-clause mocks:mocks-clause)
+           #:attr definitions
+           #'(begin opaque.definitions
+                    (splicing-let opaque.bindings mocks.definitions))
+           #:attr override-bindings #'mocks.bindings
+           #:attr opaques-info #'opaque.static-info
+           #:attr mocks-info #'mocks.static-info))
+
+(define-splicing-syntax-class definition-header/mock
+  #:attributes
+  (header/plain header/mock definitions override-bindings static-definition)
+  (pattern (~seq header:definition-header options:define/mock-options)
+           #:attr header/plain #'header.fresh
+           #:attr header/mock #'header.fresh-secondary
+           #:attr definitions #'options.definitions
+           #:attr override-bindings #'options.override-bindings
+           #:attr static-definition
+           #'(define-syntax header.id
+               (static-val-transformer
+                #'header.fresh-id
+                (mocks-syntax-info #'header.fresh-id-secondary
+                                   options.opaques-info
+                                   options.mocks-info)))))
 
 (define-syntax-class stub-header
   (pattern plain-id:id
