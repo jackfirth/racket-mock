@@ -13,7 +13,7 @@
   [call-history (-> call-history?)]
   [call-history? predicate/c]
   [call-history-record! (-> call-history? mock-call? void?)]
-  [call-history-erase! (-> call-history? void?)]
+  [call-history-reset! (-> call-history? void?)]
   [call-history-calls (-> call-history? (listof mock-call?))]
   [call-history-calls/name
    (-> call-history? (or/c symbol? #f) (listof mock-call?))]
@@ -48,7 +48,7 @@
 (define (call-history-record! history call)
   (box-cons-end! (call-history-calls-box history) call))
 
-(define (call-history-erase! history)
+(define (call-history-reset! history)
   (set-box! (call-history-calls-box history) '()))
 
 (define (call-history-calls history)

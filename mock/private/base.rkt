@@ -160,7 +160,7 @@ module+ test
                (thunk ((mock) 10 #:foo 'bar)))))
 
 (define (mock-reset! a-mock)
-  (call-history-erase! (mock-history a-mock)))
+  (call-history-reset! (mock-history a-mock)))
 
 (module+ test
   (test-case "Resetting a mock should erase its call history"
