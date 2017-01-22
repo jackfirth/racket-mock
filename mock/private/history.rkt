@@ -15,11 +15,7 @@
   [call-history-record! (-> call-history? mock-call? void?)]
   [call-history-reset! (-> call-history? void?)]
   [call-history-calls (-> call-history? (listof mock-call?))]
-  [call-history-calls/name
-   (-> call-history? (or/c symbol? #f) (listof mock-call?))]
-  [call-history-count (-> call-history? exact-nonnegative-integer?)]
-  [call-history-count/name
-   (-> call-history? (or/c symbol? #f) exact-nonnegative-integer?)]))
+  [call-history-count (-> call-history? exact-nonnegative-integer?)]))
 
 (require "args.rkt"
          "util.rkt")
@@ -54,13 +50,7 @@
 (define (call-history-calls history)
   (unbox (call-history-calls-box history)))
 
-(define (call-history-calls/name history name)
-  (filter (λ (call) (equal? (mock-call-name call) name))
-          (call-history-calls history)))
-
 (define (call-history-count history) (length (call-history-calls history)))
-(define (call-history-count/name history name)
-  (length (call-history-calls/name history name)))
 
 (module+ test
   (define (foo-call n)
@@ -74,7 +64,4 @@
   (check-pred void? (call-history-record! test-history (foo-call 2)))
   (check-equal? (call-history-calls test-history)
                 (list (foo-call 1) (bar-call 1) (foo-call 2)))
-  (check-equal? (call-history-calls/name test-history 'foo)
-                (list (foo-call 1) (foo-call 2)))
-  (check-equal? (call-history-count test-history) 3)
-  (check-equal? (call-history-count/name test-history 'bar) 1))
+  (check-equal? (call-history-count test-history) 3))
