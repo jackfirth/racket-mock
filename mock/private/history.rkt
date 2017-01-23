@@ -14,6 +14,7 @@
   [call-history? predicate/c]
   [call-history-record! (-> call-history? mock-call? void?)]
   [call-history-reset! (-> call-history? void?)]
+  [call-history-reset-all! (->* () #:rest (listof call-history?) void?)]
   [call-history-calls (-> call-history? (listof mock-call?))]
   [call-history-count (-> call-history? exact-nonnegative-integer?)]))
 
@@ -46,6 +47,9 @@
 
 (define (call-history-reset! history)
   (set-box! (call-history-calls-box history) '()))
+
+(define (call-history-reset-all! . histories)
+  (for-each call-history-reset! histories))
 
 (define (call-history-calls history)
   (unbox (call-history-calls-box history)))
