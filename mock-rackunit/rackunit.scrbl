@@ -58,4 +58,5 @@ from the @racketmodname[mock] library.
    (m2 'bar)
    (check-call-history-names h (list 'm1 'm2))
    (m1 'baz)
-   (check-call-history-names h (list 'm1 'm2)))}
+   (check-call-history-names h (list 'm1 'm2)))
+ @history[#:added "1.2"]}

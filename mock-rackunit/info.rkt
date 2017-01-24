@@ -1,10 +1,10 @@
 #lang info
 (define collection "mock")
 (define scribblings '(("rackunit.scrbl" () (library) "mock-rackunit")))
-(define version "1.1")
+(define version "1.2")
 (define deps
   '(("base" #:version "6.4")
-    ("mock" #:version "1.0")
+    ("mock" #:version "2.0")
     "rackunit-lib"))
 (define build-deps
   '("racket-doc"
