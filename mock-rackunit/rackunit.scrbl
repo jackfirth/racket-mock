@@ -44,3 +44,17 @@ from the @racketmodname[mock] library.
    (check-mock-num-calls void-mock 1)
    (void-mock 'foo)
    (check-mock-num-calls void-mock 1))}
+
+@defproc[(check-call-history-names [h call-history?] [names (listof symbol?)])
+         void?]{
+ A @racketmodname[rackunit] check that passes if @racket[h] contains a history
+ of calls by mocks with @racket[names].
+ @(mock-rackunit-examples
+   (define h (call-history))
+   (define m1 (mock #:name 'm1 #:behavior void #:external-histories (list h)))
+   (define m2 (mock #:name 'm2 #:behavior void #:external-histories (list h)))
+   (m1 'foo)
+   (m2 'bar)
+   (check-call-history-names h (list 'm1 'm2))
+   (m1 'baz)
+   (check-call-history-names h (list 'm1 'm2)))}

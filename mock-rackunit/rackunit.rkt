@@ -3,6 +3,7 @@
 provide check-mock-calls
         check-mock-called-with?
         check-mock-num-calls
+        check-call-history-names
 
 require racket/list
         rackunit
