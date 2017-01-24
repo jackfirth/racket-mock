@@ -68,3 +68,36 @@ require racket/list
     (m 'foo)
     (m 'bar)
     (check-mock-num-calls m 3)))
+
+(define-simple-check (check-call-history-names history expected-call-names)
+  (define actual-num-calls (call-history-count history))
+  (define expected-num-calls (length expected-call-names))
+  (define actual-call-names (map mock-call-name (call-history-calls history)))
+  (with-check-info/id (history)
+    (with-check-info/id (actual-num-calls expected-num-calls)
+      (when (< actual-num-calls expected-num-calls)
+        (define missing-call-names
+          (drop expected-call-names (length actual-call-names)))
+        (with-check-info/id (missing-call-names)
+          (fail-check "Mock call history contained fewer calls than expected")))
+      (when (> actual-num-calls expected-num-calls)
+        (define extra-call-names
+          (drop actual-call-names (length expected-call-names)))
+        (with-check-info/id (extra-call-names)
+          (fail-check "Mock call history contained more calls than expected"))))
+    (for ([actual-call-name (in-list actual-call-names)]
+          [expected-call-name (in-list expected-call-names)]
+          [which-call (in-naturals)])
+      (with-check-info/id (which-call actual-call-name expected-call-name)
+        (unless (equal? actual-call-name expected-call-name)
+          (fail-check "Unexpected mock called"))))))
+
+(module+ test
+  (test-case "Should check if mocks have been called in proper order"
+    (define h (call-history))
+    (define m1 (mock #:name 'm1 #:behavior void #:external-histories (list h)))
+    (define m2 (mock #:name 'm2 #:behavior void #:external-histories (list h)))
+    (m1 'foo)
+    (m2 'bar)
+    (m1 'baz)
+    (check-call-history-names h (list 'm1 'm2 'm1))))
