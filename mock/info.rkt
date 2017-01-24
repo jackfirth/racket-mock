@@ -1,7 +1,7 @@
 #lang info
 (define collection "mock")
 (define scribblings '(("main.scrbl" (multi-page) (library) "mock")))
-(define version "1.5")
+(define version "2.0")
 (define deps
   '(("base" #:version "6.4")
     "fancy-app"
