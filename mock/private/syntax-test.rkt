@@ -5,6 +5,7 @@ require racket/function
         syntax/macro-testing
         "args.rkt"
         "base.rkt"
+        "history.rkt"
         "syntax.rkt"
 
 (define (not-mock? v) (not (mock? v)))
@@ -118,3 +119,13 @@ require racket/function
              (thunk
               (convert-compile-time-error
                (with-mocks bar1 (with-mocks bar2 (void)))))))
+
+(test-case "Should add an external history to all mocks when defined"
+  (test-case "Should define an external history mocks can share"
+  (define/mock (bar/history)
+    #:history bar-history
+    #:mock foo #:with-behavior void
+    (foo))
+  (with-mocks bar/history
+    (bar/history)
+    (check-equal? (call-history-count bar-history) 1))))

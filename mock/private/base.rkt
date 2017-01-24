@@ -9,11 +9,15 @@ provide
     current-mock-calls (-> (listof mock-call?))
     current-mock-num-calls (-> exact-nonnegative-integer?)
     mock? predicate/c
-    mock (->* () (#:name symbol? #:behavior procedure?) mock?)
+    mock (->* ()
+              (#:name symbol?
+               #:behavior procedure?
+               #:external-histories (listof call-history?))
+              mock?)
+    mock-name (-> mock? (or/c symbol? #f))
     mock-reset! (-> mock? void?)
     mock-reset-all! (->* () #:rest (listof mock?) void?)
     mock-calls (-> mock? (listof mock-call?))
-    struct mock-call ([args arguments?] [results list?])
     mock-called-with? (-> mock? arguments? boolean?)
     mock-num-calls (-> mock? exact-nonnegative-integer?)
 
@@ -23,6 +27,7 @@ require fancy-app
         rackunit
         syntax/parse/define
         "args.rkt"
+        "history.rkt"
         "util.rkt"
 
 module+ test
@@ -53,17 +58,21 @@ module+ test
 (define call-mock-behavior
   (make-keyword-procedure
    (λ (kws kw-vs a-mock . vs)
+     (define name (mock-name a-mock))
      (define current-behavior (mock-behavior a-mock))
-     (define calls-box (mock-calls-box a-mock))
-     (define calls (unbox calls-box))
+     (define history (mock-history a-mock))
+     (define calls (call-history-calls history))
      (define results
-       (parameterize ([current-mock-name-proc (const (mock-name a-mock))]
+       (parameterize ([current-mock-name-proc (const name)]
                       [current-mock-calls-proc (const calls)]
                       [current-mock-num-calls-proc (const (length calls))])
          (with-values-as-list
           (keyword-apply (current-behavior) kws kw-vs vs))))
      (define args (make-arguments vs (kws+vs->hash kws kw-vs)))
-     (box-cons-end! calls-box (mock-call args results))
+     (define call (mock-call #:name name #:args args #:results results))
+     (call-history-record! history call)
+     (for ([external-history (in-list (mock-external-histories a-mock))])
+       (call-history-record! external-history call))
      (apply values results))))
 
 (define (mock-custom-write a-mock port mode)
@@ -74,8 +83,7 @@ module+ test
     (write-string (symbol->string name) port))
   (write-string ">" port))
 
-(struct mock-call (args results) #:transparent)
-(struct mock (name behavior calls-box)
+(struct mock (name behavior history external-histories)
   #:property prop:procedure call-mock-behavior
   #:property prop:object-name (struct-field-index name)
   #:constructor-name make-mock
@@ -83,22 +91,41 @@ module+ test
   #:methods gen:custom-write
   [(define write-proc mock-custom-write)])
 
-(define (mock #:behavior [given-behavior #f] #:name [name #f])
+(define (mock #:behavior [given-behavior #f]
+              #:name [name #f]
+              #:external-histories [external-histories (list)])
   (define behavior
     (or given-behavior raise-unexpected-mock-call))
-  (make-mock name (make-parameter behavior) (box '())))
+  (make-mock name (make-parameter behavior) (call-history) external-histories))
 
-(define mock-calls (compose unbox mock-calls-box))
+(define (mock-calls a-mock)
+  (call-history-calls (mock-history a-mock)))
 
 (module+ test
   (test-case "Mocks should record calls made with them"
-    (define m (mock #:behavior ~a))
+    (define m (mock #:behavior ~a #:name 'test-mock-for-testing))
     (check-equal? (m 0) "0")
     (check-equal? (m 0 #:width 3 #:align 'left) "0  ")
     (check-equal? (mock-calls m)
-                  (list (mock-call (arguments 0) '("0"))
-                        (mock-call (arguments 0 #:width 3 #:align 'left)
-                                   '("0  ")))))
+                  (list (mock-call #:name 'test-mock-for-testing
+                                   #:args (arguments 0)
+                                   #:results '("0"))
+                        (mock-call #:name 'test-mock-for-testing
+                                   #:args (arguments 0 #:width 3 #:align 'left)
+                                   #:results '("0  ")))))
+  (test-case "Mocks should record calls in external histories"
+    (define h (call-history))
+    (define m1 (mock #:behavior void #:name 'm1 #:external-histories (list h)))
+    (define m2 (mock #:behavior void #:name 'm2 #:external-histories (list h)))
+    (m1 'foo)
+    (m2 'bar)
+    (m1 'baz)
+    (define expected-calls
+      (list
+       (mock-call #:name 'm1 #:args (arguments 'foo) #:results (list (void)))
+       (mock-call #:name 'm2 #:args (arguments 'bar) #:results (list (void)))
+       (mock-call #:name 'm1 #:args (arguments 'baz) #:results (list (void)))))
+    (check-equal? (call-history-calls h) expected-calls))
   (test-equal?
    "Mocks should print like named procedures, but identify themselves as mocks"
    (~a (mock #:name 'foo)) "#<procedure:mock:foo>")
@@ -117,7 +144,8 @@ module+ test
    (define calls-mock (mock #:behavior return-mock-calls))  
    (check-equal? (calls-mock 1 2 3) '())
    (check-equal? (calls-mock #:foo 'bar)
-                 (list (mock-call (arguments 1 2 3) (list (list))))))
+                 (list (mock-call #:args (arguments 1 2 3)
+                                  #:results (list (list))))))
   (define return-mock-count (thunk* (current-mock-num-calls)))
   (test-begin
    "The current mock call count should be available to behaviors"
@@ -153,7 +181,7 @@ module+ test
                (thunk ((mock) 10 #:foo 'bar)))))
 
 (define (mock-reset! a-mock)
-  (set-box! (mock-calls-box a-mock) '()))
+  (call-history-reset! (mock-history a-mock)))
 
 (module+ test
   (test-case "Resetting a mock should erase its call history"
@@ -161,7 +189,13 @@ module+ test
     (m 'foo)
     (check-equal? (mock-num-calls m) 1)
     (mock-reset! m)
-    (check-equal? (mock-num-calls m) 0)))
+    (check-equal? (mock-num-calls m) 0))
+  (test-case "Resetting a mock should not erase its external histories"
+    (define h (call-history))
+    (define m (mock #:behavior void #:external-histories (list h)))
+    (m 'foo)
+    (mock-reset! m)
+    (check-equal? (call-history-count h) 1)))
 
 (define-simple-macro (with-mock-behavior ([mock:expr new-behavior:expr] ...) body ...)
   (parameterize ([(mock-behavior mock) new-behavior] ...) body ...))

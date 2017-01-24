@@ -1,27 +1,26 @@
 #lang sweet-exp racket/base
 
-provide definition-header
+provide definition-header/mock
         id/mock
-        mocks-clause
-        opaque-clause
-        static-val-transformer
         stub-header
         stubs
-        struct-out mock-static-info
-        struct-out mocks-syntax-info
 
 require racket/function
         racket/match
         racket/syntax
+        syntax/parse
         syntax/stx
-        syntax/parse/define
+        syntax/transformer
         "syntax-util.rkt"
+        for-syntax racket/base
         for-template racket/base
-                     "opaque.rkt"
+                     racket/splicing
                      "base.rkt"
+                     "history.rkt"
                      "not-implemented.rkt"
+                     "opaque.rkt"
+                     "syntax-param.rkt"
 
-require syntax/parse
 
 (define-syntax-class definition-header
   (pattern (~or root-id:id
@@ -56,8 +55,10 @@ require syntax/parse
            #:attr fresh-id (generate-temporary #'id)
            #:attr value
            (if (attribute given-behavior)
-               #'(mock #:name 'id #:behavior given-behavior)
-               #'(mock #:name 'id))
+               #'(mock #:name 'id
+                       #:external-histories histories
+                       #:behavior given-behavior)
+               #'(mock #:name 'id #:external-histories histories))
            #:attr definition #'(define fresh-id value)
            #:attr binding #'[mocked-id fresh-id]
            #:attr static-info #'(mock-static-info #'id #'fresh-id)))
@@ -69,17 +70,17 @@ require syntax/parse
            #:attr static-info #'(list clause.static-info ...)))
 
 (define-splicing-syntax-class opaque-clause
-  #:attributes (definitions bindings static-info)
+  #:attributes (definitions [binding 1] static-info)
   (pattern (~seq)
            #:attr definitions #'(begin)
-           #:attr bindings #'()
+           #:attr [binding 1] (list)
            #:attr static-info #'(list))
   (pattern (~seq #:opaque id:id)
            #:with id? (predicate-id #'id)
            #:with fresh-id (generate-temporary #'id)
            #:with fresh-id? (predicate-id #'fresh-id)
            #:attr definitions #'(define-opaque fresh-id #:name id)
-           #:attr bindings #'([id fresh-id] [id? fresh-id?])
+           #:attr [binding 1] (list #'[id fresh-id] #'[id? fresh-id?])
            #:attr static-info #'(list (mock-static-info #'id #'fresh-id)
                                       (mock-static-info #'id? #'fresh-id?)))
   (pattern (~seq #:opaque (id:id ...))
@@ -87,11 +88,58 @@ require syntax/parse
            #:with (fresh-id ...) (generate-temporaries #'(id ...))
            #:with (fresh-id? ...) (stx-map predicate-id #'(fresh-id ...))
            #:attr definitions #'(begin (define-opaque fresh-id #:name id) ...)
-           #:attr bindings #'([id fresh-id] ... [id? fresh-id?] ...)
+           #:attr [binding 1]
+           (syntax->list #'([id fresh-id] ... [id? fresh-id?] ...))
            #:attr static-info
            #'(map mock-static-info
                   (syntax->list #'(id ... id? ...))
                   (syntax->list #'(fresh-id ... fresh-id? ...)))))
+
+(define-splicing-syntax-class history-clause
+  #:attributes (definitions [binding 1] static-info stxparam)
+  (pattern (~seq)
+           #:attr definitions #'(begin)
+           #:attr [binding 1] (list)
+           #:attr static-info #'(list)
+           #:attr stxparam #'(make-variable-like-transformer #'(list)))
+  (pattern (~seq #:history id:id)
+           #:with fresh-id (generate-temporary #'id)
+           #:attr definitions #'(define fresh-id (call-history))
+           #:attr [binding 1] (list #'[id fresh-id])
+           #:attr static-info #'(list (mock-static-info #'id #'fresh-id))
+           #:attr stxparam #'(make-variable-like-transformer #'(list fresh-id))))
+
+(define-splicing-syntax-class define/mock-options
+  #:attributes
+  (definitions override-bindings opaques-info history-info mocks-info)
+  (pattern (~seq opaque:opaque-clause history:history-clause mocks:mocks-clause)
+           #:attr definitions
+           #'(begin opaque.definitions
+                    history.definitions
+                    (splicing-syntax-parameterize ([histories history.stxparam])
+                      (splicing-let (opaque.binding ... history.binding ...)
+                        mocks.definitions)))
+           #:attr override-bindings #'mocks.bindings
+           #:attr opaques-info #'opaque.static-info
+           #:attr history-info #'history.static-info
+           #:attr mocks-info #'mocks.static-info))
+
+(define-splicing-syntax-class definition-header/mock
+  #:attributes
+  (header/plain header/mock definitions override-bindings static-definition)
+  (pattern (~seq header:definition-header options:define/mock-options)
+           #:attr header/plain #'header.fresh
+           #:attr header/mock #'header.fresh-secondary
+           #:attr definitions #'options.definitions
+           #:attr override-bindings #'options.override-bindings
+           #:attr static-definition
+           #'(define-syntax header.id
+               (static-val-transformer
+                #'header.fresh-id
+                (mocks-syntax-info #'header.fresh-id-secondary
+                                   options.opaques-info
+                                   options.history-info
+                                   options.mocks-info)))))
 
 (define-syntax-class stub-header
   (pattern plain-id:id
@@ -106,7 +154,7 @@ require syntax/parse
            #:attr definitions #'(begin stubbed.definition ...)))
 
 (struct mock-static-info (id bound-id) #:transparent)
-(struct mocks-syntax-info (proc-id opaques mocks) #:transparent)
+(struct mocks-syntax-info (proc-id opaques histories mocks) #:transparent)
 
 (define (mock-bindings mock-static-infos)
   (map (match-lambda [(mock-static-info mock-id mock-impl-id)
@@ -127,12 +175,19 @@ require syntax/parse
            #:do [(define static (static-val #'id))]
            #:fail-unless (mocks-syntax-info? static)
            (format "identifier ~a not bound with define/mock" (syntax-e #'id))
-           #:do [(match-define (mocks-syntax-info proc-id opaques mocks)
-                   static)]
-           #:attr proc-id proc-id
-           #:with (opaque-binding-stx ...) (mock-bindings opaques)
+           #:do
+           [(match-define (mocks-syntax-info proc-id opaques histories mocks)
+              static)]
+           #:with proc-id proc-id
            #:with ([mock-id mock-impl-id] ...) (mock-bindings mocks)
-           #:attr [opaque-binding 1] (syntax->list #'(opaque-binding-stx ...))
-           #:attr [mock-binding 1]
-           (syntax->list #'([mock-id mock-impl-id] ...))
-           #:attr reset-mocks-expr #'(mock-reset-all! mock-id ...)))
+           #:with (opaque-binding ...) (mock-bindings opaques)
+           #:with ([history-id history-impl-id] ...) (mock-bindings histories)
+           #:attr reset-expr
+           #'(begin (mock-reset-all! mock-id ...)
+                    (call-history-reset-all! history-id ...))
+           #:attr [binding 1]
+           (syntax->list
+            #'([id proc-id]
+               opaque-binding ...
+               [history-id history-impl-id] ...
+               [mock-id mock-impl-id] ...))))
