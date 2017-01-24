@@ -13,6 +13,7 @@
          racket/match
          racket/syntax
          syntax/parse
+         syntax/parse/experimental/template
          syntax/stx
          syntax/transformer
          "syntax-util.rkt")
@@ -22,14 +23,13 @@
   (pattern (~seq #:mock mocked-id:id
                  (~optional (~seq #:as given-id:id))
                  (~optional (~seq #:with-behavior given-behavior:expr)))
-           #:attr id (or (attribute given-id) #'mocked-id)
-           #:attr fresh-id (generate-temporary #'id)
-           #:attr value
-           (if (attribute given-behavior)
-               #'(mock #:name 'id
-                       #:external-histories histories
-                       #:behavior given-behavior)
-               #'(mock #:name 'id #:external-histories histories))
+           #:with id (template (?? given-id mocked-id))
+           #:with fresh-id (generate-temporary #'id)
+           #:with value
+           (template
+            (mock #:name 'id
+                  #:external-histories histories
+                  (?? (?@ #:behavior given-behavior))))
            #:attr definition #'(define fresh-id value)
            #:attr binding #'[mocked-id fresh-id]
            #:attr static-info #'(mock-static-info #'id #'fresh-id)))
