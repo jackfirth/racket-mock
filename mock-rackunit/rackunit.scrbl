@@ -1,5 +1,6 @@
 #lang scribble/manual
-@(require mock/private/util-doc
+@(require (for-label mock/rackunit)
+          mock/private/util-doc
           scribble/example)
 @(define (make-mock-eval)
    (make-base-eval #:lang 'racket/base
