@@ -1,17 +1,16 @@
-#lang sweet-exp racket/base
+#lang racket/base
 
-provide stub
-        struct-out exn:fail:not-implemented
+(provide stub
+         (struct-out exn:fail:not-implemented))
 
-require racket/function
-        syntax/parse/define
-        "not-implemented.rkt"
-        for-syntax racket/base
-                   "syntax-class.rkt"
-                   
+(require syntax/parse/define
+         "not-implemented.rkt"
+         (for-syntax "stub-class.rkt"))
 
-module+ test
-  require rackunit
+(module+ test
+  (require racket/function
+           rackunit))
+
 
 (define-simple-macro (stub stubs:stubs) stubs.definitions)
 

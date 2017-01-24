@@ -1,51 +1,22 @@
-#lang sweet-exp racket/base
+#lang racket/base
 
-provide definition-header/mock
-        id/mock
-        stub-header
-        stubs
+(provide definition-header/mock
+         id/mock)
 
-require racket/function
-        racket/match
-        racket/syntax
-        syntax/parse
-        syntax/stx
-        syntax/transformer
-        "syntax-util.rkt"
-        for-syntax racket/base
-        for-template racket/base
-                     racket/splicing
-                     "base.rkt"
-                     "history.rkt"
-                     "not-implemented.rkt"
-                     "opaque.rkt"
-                     "syntax-param.rkt"
+(require (for-syntax racket/base)
+         (for-template racket/base
+                       racket/splicing
+                       "base.rkt"
+                       "history.rkt"
+                       "opaque.rkt"
+                       "syntax-param.rkt")
+         racket/match
+         racket/syntax
+         syntax/parse
+         syntax/stx
+         syntax/transformer
+         "syntax-util.rkt")
 
-
-(define-syntax-class definition-header
-  (pattern (~or root-id:id
-                (~or (subheader:definition-header (~or arg-clause kwarg-clause) ...)
-                     (subheader:definition-header (~or arg-clause kwarg-clause) ... . rest-arg:id)))
-           #:attr id
-           (or (attribute root-id) (attribute subheader.id))
-           #:attr fresh-id
-           (if (attribute root-id)
-               (generate-temporary #'id)
-               (attribute subheader.fresh-id))
-           #:attr fresh
-           (cond [(attribute root-id) #'fresh-id]
-                 [(attribute rest-arg)
-                  #'(subheader.fresh arg-clause ... kwarg-clause ... . rest-arg)]
-                 [else #'(subheader.fresh arg-clause ... kwarg-clause ...)])
-           #:attr fresh-id-secondary
-           (if (attribute root-id)
-               (generate-temporary #'id)
-               (attribute subheader.fresh-id-secondary))
-           #:attr fresh-secondary
-           (cond [(attribute root-id) #'fresh-id-secondary]
-                 [(attribute rest-arg)
-                  #'(subheader.fresh-secondary arg-clause ... kwarg-clause ... . rest-arg)]
-                 [else #'(subheader.fresh-secondary arg-clause ... kwarg-clause ...)])))
 
 (define-splicing-syntax-class mock-clause
   (pattern (~seq #:mock mocked-id:id
@@ -141,18 +112,6 @@ require racket/function
                                    options.history-info
                                    options.mocks-info)))))
 
-(define-syntax-class stub-header
-  (pattern plain-id:id
-           #:attr definition
-           #'(define plain-id (not-implemented-proc 'plain-id)))
-  (pattern header:definition-header
-           #:attr definition
-           #'(define header (raise-not-implemented 'header.id))))
-
-(define-splicing-syntax-class stubs
-  (pattern (~seq stubbed:stub-header ...+)
-           #:attr definitions #'(begin stubbed.definition ...)))
-
 (struct mock-static-info (id bound-id) #:transparent)
 (struct mocks-syntax-info (proc-id opaques histories mocks) #:transparent)
 
@@ -160,14 +119,6 @@ require racket/function
   (map (match-lambda [(mock-static-info mock-id mock-impl-id)
                       (list (syntax-local-introduce mock-id) mock-impl-id)])
        mock-static-infos))
-
-(struct static-val-transformer (id value)
-  #:property prop:rename-transformer (struct-field-index id))
-
-(define (static-val static-trans-stx)
-  (define-values (trans _)
-    (syntax-local-value/immediate static-trans-stx (thunk (values #f #f))))
-  (and trans (static-val-transformer-value trans)))
 
 (define-syntax-class id/mock
   #:description "define/mock identifier"
