@@ -10,26 +10,35 @@ of testing, and once using real functions to provide actual functionality. The
 at once.
 
 @defform[#:id define/mock
-         (define/mock header opaque-clause mock-clause ... body ...)
+         (define/mock header
+           opaque-clause history-clause
+           mock-clause ...
+           body ...)
          #:grammar ([header id (header arg ...) (header arg ... . rest)]
                     [opaque-clause (code:line)
                                    (code:line #:opaque opaque-id:id)
                                    (code:line #:opaque (opaque-id:id ...))]
+                    [history-clause (code:line)
+                                    (code:line #:history history-id:id)]
                     [mock-clause (code:line #:mock mock-id mock-as mock-default)]
                     [mock-as (code:line) (code:line #:as mock-as-id)]
                     [mock-default (code:line) (code:line #:with-behavior behavior-expr)])
          #:contracts ([behavior-expr procedure?])]{
- Like @racket[define] except two versions of @racket[id] are defined, a normal definition
- and a definition where each @racket[mock-id] is defined as a @mock-tech{mock} within
- @racket[body ...]. This alternate definition is used whenever @racket[id] is called within
- a @racket[(with-mocks id ...)] form. Each mock uses @racket[beavhior-expr] as its
- @behavior-tech{behavior} if provided, and is bound to @racket[mock-as-id] or
- @racket[mock-id] within @racket[(with-mocks id ...)] for use with checks like
+ Like @racket[define] except two versions of @racket[id] are defined, a normal
+ definition and a definition where each @racket[mock-id] is defined as a
+ @mock-tech{mock} within @racket[body ...]. This alternate definition is used
+ whenever @racket[id] is called within a @racket[(with-mocks id ...)] form. Each
+ mock uses @racket[beavhior-expr] as its @behavior-tech{behavior} if provided,
+ and is bound to @racket[mock-as-id] or @racket[mock-id] within
+ @racket[(with-mocks id ...)] for use with checks like
  @racket[check-mock-called-with?]. Each @racket[opaque-id] is defined as an
- @opaque-tech{opaque-value} using @racket[define-opaque], and each @racket[behavior-expr]
- may refer to any @racket[opaque-id]. The @racket[id] is bound as a rename transformer with
- @racket[define-syntax], but also includes information used by @racket[with-mocks] to bind
- @racket[id], each @racket[mock-id] or @racket[mock-as-id], and each @racket[opaque-id].
+ @opaque-tech{opaque-value} using @racket[define-opaque], and each
+ @racket[behavior-expr] may refer to any @racket[opaque-id]. If provided,
+ @racket[history-id] is bound as a @racket[call-history] and each mock uses
+ @racket[history-id] as an external call history. The @racket[id] is bound as a
+ rename transformer with @racket[define-syntax], but also includes information
+ used by @racket[with-mocks] to bind @racket[id], each @racket[mock-id] or
+ @racket[mock-as-id], and each @racket[opaque-id].
  @mock-examples[
  (define/mock (foo)
    #:mock bar #:as bar-mock #:with-behavior (const "wow!")
