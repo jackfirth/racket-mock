@@ -149,6 +149,7 @@
            mock-call?]
    @defproc[(mock-call? [v any/c]) boolean?]
    @defproc[(mock-call-args [call mock-call?]) arguments?]
+   @defproc[(mock-call-name [call mock-call?]) (or/c symbol? #f)]
    @defproc[(mock-call-results [call mock-call?]) list?])]{
  Constructor, predicate, and accessors of a structure containing the
  @args-tech{arguments} and result values of a single call to a @mock-tech{mock}
