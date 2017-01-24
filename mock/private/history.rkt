@@ -9,6 +9,7 @@
         mock-call?)]
   [mock-call? predicate/c]
   [mock-call-args (-> mock-call? arguments?)]
+  [mock-call-name (-> mock-call? (or/c symbol? #f))]
   [mock-call-results (-> mock-call? list?)]
   [call-history (-> call-history?)]
   [call-history? predicate/c]
