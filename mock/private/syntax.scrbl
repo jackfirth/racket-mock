@@ -109,7 +109,9 @@ at once.
      (bar))
    (eval:check (foo/param) "bam!")
    (with-mocks foo/param
-     (displayln (foo/param))))}
+     (displayln (foo/param))))
+ @history[#:changed "2.0" "Added #:call-history option"]
+ @history[#:changed "2.1" "Added #:mock-param option"]}
 
 @defform[(with-mocks proc/mocks-id body ...)]{
  Looks up static mocking information associated with @racket[proc/mocks-id], which must
