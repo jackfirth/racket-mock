@@ -121,11 +121,28 @@ require racket/function
                (with-mocks bar1 (with-mocks bar2 (void)))))))
 
 (test-case "Should add an external history to all mocks when defined"
-  (test-case "Should define an external history mocks can share"
   (define/mock (bar/history)
     #:history bar-history
     #:mock foo #:with-behavior void
     (foo))
   (with-mocks bar/history
     (bar/history)
-    (check-equal? (call-history-count bar-history) 1))))
+    (check-equal? (call-history-count bar-history) 1)))
+
+(test-case "Should allow mocking of procedure-containing parameters"
+  (define current-foo (make-parameter foo))
+  (define (foo/param) ((current-foo)))
+  (test-case "Should provide mock in param by default"
+    (define/mock (bar/param)
+      #:mock-param current-foo #:with-behavior (const "foo-param")
+      (foo/param))
+    (with-mocks bar/param
+      (check-equal? (bar/param) "foo-param")
+      (check-equal? (mock-num-calls (current-foo)) 1)))
+  (test-case "Should provide mock directly when given binding"
+    (define/mock (bar/param/name)
+      #:mock-param current-foo #:as foo-mock #:with-behavior (const "foo-param")
+      (foo/param))
+    (with-mocks bar/param/name
+      (check-equal? (bar/param/name) "foo-param")
+      (check-equal? (mock-num-calls foo-mock) 1))))
