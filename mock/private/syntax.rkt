@@ -1,20 +1,15 @@
-#lang sweet-exp racket/base
+#lang racket/base
 
-provide define/mock
-        with-mocks
+(provide define/mock
+         with-mocks)
 
-require racket/splicing
-        racket/stxparam
-        syntax/parse/define
-        "base.rkt"
-        "opaque.rkt"
-        for-syntax racket/base
-                   syntax/parse
-                   "syntax-class.rkt"
+(require racket/splicing
+         racket/stxparam
+         syntax/parse/define
+         (for-syntax racket/base
+                     syntax/parse
+                     "syntax-class.rkt"))
 
-module+ mock-test-setup
-  require rackunit
-          "args.rkt"
 
 (define-simple-macro
   (define/mock header:definition-header/mock body:expr ...+)
@@ -25,7 +20,10 @@ module+ mock-test-setup
     header.static-definition))
 
 (define-simple-macro (with-mocks/impl proc:id/mock body:expr ...)
-  (let (proc.binding ...) body ... proc.reset-expr))
+  (let (proc.binding ...)
+    (parameterize (proc.parameterization ...)
+      body ...)
+    proc.reset-expr))
 
 (define-for-syntax (with-mocks/nested stx)
   (raise-syntax-error #f "nested use of with-mocks not allowed" stx))
