@@ -20,13 +20,18 @@ provide
     mock-calls (-> mock? (listof mock-call?))
     mock-called-with? (-> mock? arguments? boolean?)
     mock-num-calls (-> mock? exact-nonnegative-integer?)
+    struct (exn:fail:unexpected-arguments exn:fail)
+      ([message string?]
+       [continuation-marks continuation-mark-set?]
+       [args arguments?])
+    make-raise-unexpected-arguments-exn (-> symbol? procedure?)
 
-require fancy-app
+require arguments
+        fancy-app
         racket/match
         racket/function
         rackunit
         syntax/parse/define
-        "args.rkt"
         "history.rkt"
         "util.rkt"
 
@@ -34,6 +39,56 @@ module+ test
   require rackunit
           racket/format
 
+
+(struct exn:fail:unexpected-arguments exn:fail (args) #:transparent)
+
+(define (format-positional-args-message args)
+  (apply string-append
+         (map (λ (arg) (format "\n   ~v" arg)) args)))
+
+(module+ test
+  (check-equal? (format-positional-args-message '(1 foo "blah"))
+                "\n   1\n   'foo\n   \"blah\""))
+
+(define (format-keyword-args-message kwargs)
+  (apply string-append
+         (hash-map kwargs (λ (kw arg) (format "\n   ~a: ~v" kw arg)))))
+
+(define (unexpected-call-message source-name
+                                 #:positional positional-msg
+                                 #:keyword keyword-msg)
+  (define (arg-part type msg) (format "\n  ~a: ~a" type msg))
+  (define first-part (format "~a: unexpectedly called" source-name))
+  (if (or positional-msg keyword-msg)
+      (format "~a with arguments~a~a"
+              first-part
+              (if positional-msg (arg-part 'positional positional-msg) "")
+              (if keyword-msg (arg-part 'keyword keyword-msg) ""))
+      first-part))
+
+(module+ test
+  (check-equal? (unexpected-call-message 'foo #:positional #f #:keyword #f)
+                "foo: unexpectedly called")
+  (check-equal? (unexpected-call-message 'foo #:positional "pos" #:keyword #f)
+                "foo: unexpectedly called with arguments\n  positional: pos")
+  (check-equal? (unexpected-call-message 'foo #:positional #f #:keyword "kw")
+                "foo: unexpectedly called with arguments\n  keyword: kw")
+  (check-equal? (unexpected-call-message 'foo #:positional "pos" #:keyword "kw")
+                "foo: unexpectedly called with arguments
+  positional: pos
+  keyword: kw"))
+
+(define (make-raise-unexpected-arguments-exn source-name)
+  (make-keyword-procedure
+   (λ (kws kw-vs . vs)
+     (define kwargs (kws+vs->hash kws kw-vs))
+     (define message
+       (unexpected-call-message source-name
+                                #:positional (format-positional-args-message vs)
+                                #:keyword (format-keyword-args-message kwargs)))
+     (raise
+      (exn:fail:unexpected-arguments
+       message (current-continuation-marks) (make-arguments vs kwargs))))))
 
 (define (make-mock-proc-parameter source-name)
   (define message

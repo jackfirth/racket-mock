@@ -19,7 +19,7 @@
   [call-history-calls (-> call-history? (listof mock-call?))]
   [call-history-count (-> call-history? exact-nonnegative-integer?)]))
 
-(require "args.rkt"
+(require arguments
          "util.rkt")
 
 (module+ test

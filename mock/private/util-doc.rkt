@@ -3,7 +3,6 @@
 provide
   args-tech
   behavior-tech
-  define-args-tech
   define-behavior-tech
   define-mock-tech
   define-opaque-tech
@@ -46,11 +45,16 @@ require
     ...))
 
 (define-techs
-  ["arguments struct" args-tech define-args-tech]
   ["behavior" behavior-tech define-behavior-tech]
   ["mock" mock-tech define-mock-tech]
   ["opaque" opaque-tech define-opaque-tech]
   ["stub" stub-tech define-stub-tech])
+
+(define (args-tech . pre-flow)
+  (apply tech
+         #:doc '(lib "arguments/main.scrbl")
+         #:key "arguments-struct"
+         pre-flow))
 
 (define (parameter-tech . pre-flow)
   (apply tech #:doc '(lib "scribblings/guide/guide.scrbl") pre-flow))

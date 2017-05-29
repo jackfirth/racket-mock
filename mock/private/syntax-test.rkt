@@ -3,7 +3,7 @@
 require racket/function
         rackunit
         syntax/macro-testing
-        "args.rkt"
+        arguments
         "base.rkt"
         "history.rkt"
         "syntax.rkt"
