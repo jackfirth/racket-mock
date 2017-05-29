@@ -185,3 +185,6 @@
    (void-mock 10 3)
    (void-mock 'foo 'bar 'baz)
    (mock-num-calls void-mock))}
+
+ @defstruct*[(exn:fail:unexpected-arguments exn:fail) ([args arguments?]) #:transparent]{
+  An exception type used by @mock-tech{mocks} that don't expect to be called at all.}

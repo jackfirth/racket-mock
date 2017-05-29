@@ -18,10 +18,11 @@ before_install:
 
 install:
   - raco pkg install --auto
+      $TRAVIS_BUILD_DIR/arguments
       $TRAVIS_BUILD_DIR/mock
       $TRAVIS_BUILD_DIR/mock-rackunit
 
 script:
-  - raco test -c mock
-  - raco doc-coverage mock mock/rackunit
-  - raco cover -f codecov -d $TRAVIS_BUILD_DIR/coverage -c mock
+  - raco test -p arguments mock mock-rackunit
+  - raco doc-coverage arguments mock mock/rackunit
+  - raco cover -f codecov -p arguments mock mock-rackunit
