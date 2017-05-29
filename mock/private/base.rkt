@@ -24,7 +24,6 @@ provide
       ([message string?]
        [continuation-marks continuation-mark-set?]
        [args arguments?])
-    make-raise-unexpected-arguments-exn (-> symbol? procedure?)
 
 require arguments
         fancy-app
