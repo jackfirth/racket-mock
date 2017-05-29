@@ -5,7 +5,6 @@
 (provide
  (contract-out
   [keyword-hash? flat-contract?]
-  [kws+vs->hash (-> (listof keyword?) list? keyword-hash?)]
   [arguments? predicate/c]
   [arguments-positional (-> arguments? list?)]
   [arguments-keyword (-> arguments? keyword-hash?)]

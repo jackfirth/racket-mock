@@ -80,7 +80,7 @@ module+ test
 (define (make-raise-unexpected-arguments-exn source-name)
   (make-keyword-procedure
    (λ (kws kw-vs . vs)
-     (define kwargs (kws+vs->hash kws kw-vs))
+     (define kwargs (make-immutable-hash (map cons kws kw-vs)))
      (define message
        (unexpected-call-message source-name
                                 #:positional (format-positional-args-message vs)
@@ -122,7 +122,8 @@ module+ test
                       [current-mock-num-calls-proc (const (length calls))])
          (with-values-as-list
           (keyword-apply (current-behavior) kws kw-vs vs))))
-     (define args (make-arguments vs (kws+vs->hash kws kw-vs)))
+     (define args
+       (make-arguments vs (make-immutable-hash (map cons kws kw-vs))))
      (define call (mock-call #:name name #:args args #:results results))
      (call-history-record! history call)
      (for ([external-history (in-list (mock-external-histories a-mock))])
