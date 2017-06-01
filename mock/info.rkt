@@ -11,6 +11,8 @@
   '("racket-doc"
     "scribble-lib"
     "sweet-exp"))
+(define implies
+  '("arguments"))
 (define compile-omit-paths
   '("private"))
 (define test-omit-paths
