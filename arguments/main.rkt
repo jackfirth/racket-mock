@@ -9,6 +9,7 @@
   [arguments-positional (-> arguments? list?)]
   [arguments-keyword (-> arguments? keyword-hash?)]
   [arguments (unconstrained-domain-> arguments?)]
+  [apply/arguments (-> procedure? arguments? any)]
   [make-arguments (-> list? keyword-hash? arguments?)]
   [empty-arguments arguments?]))
 
@@ -85,5 +86,17 @@
    "Args values should print unambiguosly in the face of quoted positional keywords"
    (check-not-equal? (~v (arguments #:foo 'bar))
                      (~v (arguments '#:foo 'bar)))))
+
+(define (apply/arguments f args)
+  (define vs (arguments-positional args))
+  (define kwargs (hash->list (arguments-keyword args)))
+  (define kws (map car kwargs))
+  (define kw-vs (map cdr kwargs))
+  (keyword-apply f kws kw-vs vs))
+
+(module+ test
+  (test-case "apply/arguments"
+    (define args (arguments '("fooooo" "bar" "bazz") < #:key string-length))
+    (check-equal? (apply/arguments sort args) '("bar" "bazz" "fooooo"))))
 
 (define empty-arguments (arguments))

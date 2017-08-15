@@ -41,6 +41,15 @@ procedures for constructing and manipulating these structures are provided.
   @defproc[(arguments-keyword [arguments arguments?]) keyword-hash?])]{
  Predicate and accessors for @args-tech{arguments structures}.}
 
+@defproc[(apply/arguments [f procedure?] [args arguments?]) any]{
+ Calls @racket[f] with @racket[args] and returns whatever values are returned by
+ @racket[f].
+ @(args-examples
+   (apply/arguments sort
+                    (arguments '("fooooo" "bar" "bazz") <
+                               #:key string-length)))
+ @history[#:added "1.1"]}
+
 @defthing[#:kind "value" empty-arguments arguments?]{
  The empty @args-tech{arguments structure}. Equivalent to @racket[(arguments)].}
 
