@@ -11,6 +11,7 @@
   [arguments? predicate/c]
   [arguments-positional (-> arguments? list?)]
   [arguments-keyword (-> arguments? keyword-hash?)]
+  [arguments-merge (->* () #:rest (listof arguments?) arguments?)]
   [arguments (unconstrained-domain-> arguments?)]
   [apply/arguments (-> procedure? arguments? any)]
   [make-arguments (-> list? keyword-hash? arguments?)]
