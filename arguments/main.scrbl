@@ -50,6 +50,30 @@ procedures for constructing and manipulating these structures are provided.
                                #:key string-length)))
  @history[#:added "1.1"]}
 
+@defform[(lambda/arguments args-id body ...+)]{
+ Constructs an anonymous function that accepts any number of arguments, collects
+ them into an @args-tech{arguments structure}, and binds that structure to
+ @racket[args-id] in the @racket[body] forms.
+ @(args-examples
+   (define pos-sum
+     (lambda/arguments args
+       (apply + (arguments-positional args))))
+   (pos-sum 1 2 3)
+   (pos-sum 1 2 3 #:foo 'bar))
+ @history[#:added "1.2"]}
+
+@defform[(define/arguments (id args-id) body ...+)]{
+ Defines @racket[id] as a function that accepts any number of arguments,
+ collects them into an @args-tech{arguments structure}, and binds that structure
+ to @racket[args-id] in the @racket[body] forms.
+ @(args-examples
+   (define/arguments (keywords-product args)
+     (for/product ([(k v) (in-hash (arguments-keyword args))])
+       v))
+   (keywords-product #:foo 2 #:bar 3)
+   (keywords-product 'ignored #:baz 6 #:blah 4))
+ @history[#:added "1.2"]}
+
 @defthing[#:kind "value" empty-arguments arguments?]{
  The empty @args-tech{arguments structure}. Equivalent to @racket[(arguments)].}
 

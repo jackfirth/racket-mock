@@ -2,6 +2,9 @@
 
 (require racket/contract/base)
 
+(provide define/arguments
+         lambda/arguments)
+
 (provide
  (contract-out
   [keyword-hash? flat-contract?]
@@ -13,9 +16,12 @@
   [make-arguments (-> list? keyword-hash? arguments?)]
   [empty-arguments arguments?]))
 
+(require syntax/parse/define)
+
 (module+ test
   (require racket/format
            rackunit))
+
 
 (define keyword-hash? (hash/c keyword? any/c #:immutable #t #:flat? #t))
 
@@ -53,10 +59,16 @@
   #:methods gen:custom-write
   [(define write-proc arguments-custom-write)])
 
-(define arguments
+(define-simple-macro (lambda/arguments args:id body:expr ...+)
   (make-keyword-procedure
    (λ (kws kw-vs . vs)
-     (make-arguments vs (kws+vs->hash kws kw-vs)))))
+     (define args (make-arguments vs (kws+vs->hash kws kw-vs)))
+     body ...)))
+
+(define-simple-macro (define/arguments (id:id args:id) body:expr ...+)
+  (define id (lambda/arguments args body ...)))
+
+(define/arguments (arguments args) args)
 
 (module+ test
   (test-equal? "Args constructors should agree when given no values"
