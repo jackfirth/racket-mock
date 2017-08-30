@@ -15,12 +15,22 @@
 @(define (args-tech #:definition? [definition? #f] . pre-flow)
   (apply (if definition? deftech tech) #:key "arguments-struct" pre-flow))
 
+@(define github-url
+   "https://github.com/jackfirth/racket-mock/tree/master/arguments")
+
+@(define license-url
+   "https://github.com/jackfirth/racket-mock/blob/master/LICENSE")
+
 @title{Arguments Structures}
 @defmodule[arguments]
+@author[@author+email["Jack Firth" "jackhfirth@gmail.com"]]
 
 This library defines @args-tech[#:definition? #t]{arguments structures}, values
 containing a set of positional and keyword argument values. Various utility
 procedures for constructing and manipulating these structures are provided.
+
+Source code for this library is avaible @hyperlink[github-url]{on Github} and is
+provided under the terms of the @hyperlink[license-url]{MIT License}.
 
 @defthing[#:kind "procedure" arguments (unconstrained-domain-> arguments?)]{
  Returns all arguments given, in the form of an @args-tech{arguments structure}.
