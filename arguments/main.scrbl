@@ -60,6 +60,19 @@ provided under the terms of the @hyperlink[license-url]{MIT License}.
                                #:key string-length)))
  @history[#:added "1.1"]}
 
+@defproc[(arguments-merge [args arguments?] ...) arguments?]{
+ Returns a combination of the given @racket[args]. The returned @args-tech{
+  arguments structure} contains all the positional and keyword arguments of each
+ @racket[args] structure. Positional arguments are ordered left to right, and
+ if two @racket[args] structures have duplicate keyword arguments the rightmost
+ @racket[args] takes precedence. When called with no arguments, returns
+ @racket[empty-arguments].
+ @(args-examples
+   (arguments-merge (arguments 1 #:foo 2 #:bar 3)
+                    (arguments 'a 'b #:foo 'c))
+   (arguments-merge))
+ @history[#:added "1.3"]}
+
 @defform[(lambda/arguments args-id body ...+)]{
  Constructs an anonymous function that accepts any number of arguments, collects
  them into an @args-tech{arguments structure}, and binds that structure to

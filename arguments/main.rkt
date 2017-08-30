@@ -11,12 +11,14 @@
   [arguments? predicate/c]
   [arguments-positional (-> arguments? list?)]
   [arguments-keyword (-> arguments? keyword-hash?)]
+  [arguments-merge (->* () #:rest (listof arguments?) arguments?)]
   [arguments (unconstrained-domain-> arguments?)]
   [apply/arguments (-> procedure? arguments? any)]
   [make-arguments (-> list? keyword-hash? arguments?)]
   [empty-arguments arguments?]))
 
-(require syntax/parse/define)
+(require racket/list
+         syntax/parse/define)
 
 (module+ test
   (require racket/format
@@ -112,3 +114,25 @@
     (check-equal? (apply/arguments sort args) '("bar" "bazz" "fooooo"))))
 
 (define empty-arguments (arguments))
+
+(define (arguments-merge . args-vs)
+  (define pos (append* (map arguments-positional args-vs)))
+  (define kw-hash
+    (for*/hash ([h (in-list (map arguments-keyword args-vs))]
+                [(k v) (in-hash h)])
+      (values k v)))
+  (make-arguments pos kw-hash))
+
+(module+ test
+  (check-equal? (arguments-merge) empty-arguments)
+  (check-equal? (arguments-merge (arguments 1 2)
+                                 (arguments 3 4 5)
+                                 (arguments 6))
+                (arguments 1 2 3 4 5 6))
+  (check-equal? (arguments-merge (arguments #:foo 1)
+                                 (arguments #:bar 2 #:baz 3)
+                                 (arguments #:foo 'replace))
+                (arguments #:foo 'replace #:bar 2 #:baz 3))
+  (check-equal? (arguments-merge (arguments 1 2 #:foo 3)
+                                 (arguments 4 #:bar 5 #:baz 6))
+                (arguments 1 2 4 #:foo 3 #:bar 5 #:baz 6)))
