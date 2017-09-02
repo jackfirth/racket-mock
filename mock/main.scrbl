@@ -16,6 +16,10 @@ side effects like mutation and IO.
 
 source code: @url["https://github.com/jackfirth/racket-mock"]
 
+For integration with @racketmodname[rackunit #:indirect], see the
+@racketmodname[mock/rackunit #:indirect] module in the @racket[mock-rackunit]
+package.
+
 @table-of-contents[]
 @include-section["private/guide.scrbl"]
 @include-section["private/reference.scrbl"]
