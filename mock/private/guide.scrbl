@@ -116,10 +116,10 @@ mocking out dependencies.
 @define-persistent-mock-examples[mock-behavior-examples]
 
 Mocks have a @italic{behavior}, which defines what they return when called. This
-behavior is not fixed - mocks can have their behavior changed dynamically using
-@racket[with-behavior]. This allows the same mock to respond differently to different
-calls while retaining a history of all calls. Recall the favorite color procedure we
-defined in the previous section.
+behavior is not fixed; mocks can have their behavior changed dynamically using
+@racket[with-mock-behavior]. This allows the same mock to respond differently to
+different calls while retaining a history of all calls. Recall the favorite color
+procedure we defined in the previous section:
 
 @mock-behavior-examples[
  (define (print-favorite-color-message #:read-with [file->string file->string]
