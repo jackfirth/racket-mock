@@ -17,7 +17,7 @@ The @racketmodname[mock] library defines @mock-tech{mocks}, procedures that reco
 they're used and can have their response to calls dynamically altered. Mocks are most
 useful when testing imperative code or code with side effects, serving as "fake"
 implementations in tests for verifying real implementations are used correctly. For
-example, how would one test this procedure?
+example, consider the following procedure:
 
 @mock-intro-examples[
  (define (call/secret proc)
@@ -26,11 +26,11 @@ example, how would one test this procedure?
  (call/secret print)
  (call/secret values)]
 
-Howw can a test verify that the secret value is passed correctly? It would be one thing
+How can a test verify that the secret value is passed correctly? It would be one thing
 if @racket[call/secret] returned the result of the call, then we could simply pass in
 @racket[values] and verify that the whole thing returns @racket["secret"]. But because
 the result of the call is discarded, we somehow need to use a procedure that records a
-history of all calls made with it and then check that history after the fact. This is
+history of all calls made with it so we can check that history afterwards. This is
 precisely what mocks are for.
 
 @mock-intro-examples[
