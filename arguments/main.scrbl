@@ -58,7 +58,9 @@ provided under the terms of the @hyperlink[license-url]{MIT License}.
    (apply/arguments sort
                     (arguments '("fooooo" "bar" "bazz") <
                                #:key string-length)))
- @history[#:added "1.1"]}
+ @history[#:added "1.1"
+          #:changed "1.2.1" @begin{Fixed bug where improper keyword sorting
+            caused nondeterministic contract exceptions}]}
 
 @defproc[(arguments-merge [args arguments?] ...) arguments?]{
  Returns a combination of the given @racket[args]. The returned @args-tech{

@@ -103,15 +103,20 @@
 
 (define (apply/arguments f args)
   (define vs (arguments-positional args))
-  (define kwargs (hash->list (arguments-keyword args)))
+  (define kwargs
+    (sort (hash->list (arguments-keyword args)) keyword<? #:key car))
   (define kws (map car kwargs))
   (define kw-vs (map cdr kwargs))
   (keyword-apply f kws kw-vs vs))
 
 (module+ test
   (test-case "apply/arguments"
-    (define args (arguments '("fooooo" "bar" "bazz") < #:key string-length))
-    (check-equal? (apply/arguments sort args) '("bar" "bazz" "fooooo"))))
+    (test-begin
+     (define args (arguments '("fooooo" "bar" "bazz") < #:key string-length))
+     (check-equal? (apply/arguments sort args) '("bar" "bazz" "fooooo")))
+    (test-case "keyword-sorting"
+      (define args (arguments #:a 1 #:b 2 #:c 3 #:foo 4 #:baz 5))
+      (check-equal? (apply/arguments arguments args) args))))
 
 (define empty-arguments (arguments))
 
