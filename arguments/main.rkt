@@ -14,7 +14,9 @@
   [arguments-merge (->* () #:rest (listof arguments?) arguments?)]
   [arguments (unconstrained-domain-> arguments?)]
   [apply/arguments (-> procedure? arguments? any)]
-  [make-arguments (-> list? keyword-hash? arguments?)]
+  [make-arguments (case->
+                   (-> list? list? keyword-hash? arguments?)
+                   (-> list? keyword-hash? arguments?))]
   [empty-arguments arguments?]))
 
 (require racket/list
@@ -54,12 +56,22 @@
     (recur arg port))
   (write-string ")" port))
 
-(struct arguments (positional keyword)
+(struct arguments (left right keyword)
   #:transparent
-  #:constructor-name make-arguments
+  #:constructor-name ~make-arguments
   #:omit-define-syntaxes
   #:methods gen:custom-write
   [(define write-proc arguments-custom-write)])
+
+(define make-arguments
+  (case-lambda [(pos kw)
+                (~make-arguments pos '() kw)]
+               [(left right kw)
+                (~make-arguments left right kw)]))
+
+(define (arguments-positional arguments)
+  (append (arguments-left arguments)
+          (arguments-right arguments)))
 
 (define-simple-macro (lambda/arguments args:id body:expr ...+)
   (make-keyword-procedure
@@ -97,7 +109,7 @@
    (~v (arguments 1  #:foo 'bar 2 3 #:baz "blah"))
    "(arguments 1 2 3 #:baz \"blah\" #:foo 'bar)")
   (test-begin
-   "Args values should print unambiguosly in the face of quoted positional keywords"
+   "Args values should print unambiguously in the face of quoted positional keywords"
    (check-not-equal? (~v (arguments #:foo 'bar))
                      (~v (arguments '#:foo 'bar)))))
 
@@ -121,12 +133,13 @@
 (define empty-arguments (arguments))
 
 (define (arguments-merge . args-vs)
-  (define pos (append* (map arguments-positional args-vs)))
+  (define left (append* (map arguments-left args-vs)))
+  (define right (append* (reverse (map arguments-right args-vs))))
   (define kw-hash
     (for*/hash ([h (in-list (map arguments-keyword args-vs))]
                 [(k v) (in-hash h)])
       (values k v)))
-  (make-arguments pos kw-hash))
+  (make-arguments left right kw-hash))
 
 (module+ test
   (check-equal? (arguments-merge) empty-arguments)
