@@ -66,7 +66,7 @@ module+ test
     (unless (< i (vector-length vec))
       (raise-arguments-error
        'const-series "called more times than number of arguments"
-       'num-calls i))
+       "num-calls" i))
     i)
   (define (index++!) (box-transform! index-box add1))
 
